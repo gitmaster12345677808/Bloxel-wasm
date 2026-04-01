@@ -3,55 +3,636 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Minetest for the Web</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+        <meta name="theme-color" content="#120730">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Bloxel">
+    <title>Bloxel</title>
+        <link rel="manifest" href="app.webmanifest">
+        <link rel="icon" type="image/svg+xml" href="icon.svg">
+        <link rel="apple-touch-icon" href="apple-touch-icon.png">
+        <style>
+            :root {
+                color-scheme: dark;
+                --surface: rgba(12, 8, 28, 0.9);
+                --surface-strong: rgba(18, 12, 40, 0.96);
+                --surface-border: rgba(139, 92, 246, 0.35);
+                --text: #f0eafa;
+                --muted: #b8a9d9;
+                --accent: #8b5cf6;
+                --accent-strong: #7c3aed;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html {
+                background: #040608;
+            }
+
+            body {
+                margin: 0;
+                min-height: 100svh;
+                padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+                background:
+                    radial-gradient(circle at top, rgba(109, 40, 217, 0.28), transparent 48%),
+                    linear-gradient(180deg, #0c0820 0%, #07050f 58%, #040608 100%);
+                color: var(--text);
+                font-family: Verdana, Geneva, sans-serif;
+            }
+
+            .landing-shell {
+                width: min(100%, 960px);
+                margin: 0 auto;
+            }
+
+            .hero {
+                margin-bottom: 20px;
+            }
+
+            .hero h1 {
+                margin: 0 0 8px;
+                font-size: clamp(2rem, 6vw, 3.4rem);
+                line-height: 0.95;
+                letter-spacing: 0.02em;
+            }
+
+            .hero p {
+                max-width: 52rem;
+                margin: 0;
+                color: var(--muted);
+                line-height: 1.5;
+            }
+
+            .panel {
+                background: var(--surface);
+                border: 1px solid var(--surface-border);
+                border-radius: 20px;
+                padding: 18px;
+                box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+                backdrop-filter: blur(10px);
+            }
+
+            .panel + .panel {
+                margin-top: 16px;
+            }
+
+            .install-panel {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .install-panel strong,
+            .section-title {
+                display: block;
+                margin-bottom: 6px;
+                font-size: 1.05rem;
+            }
+
+            .install-panel p,
+            .compat-note p,
+            .field-note,
+            .section-copy {
+                margin: 0;
+                color: var(--muted);
+                line-height: 1.45;
+            }
+
+            .stack {
+                display: grid;
+                gap: 16px;
+            }
+
+            .section {
+                display: grid;
+                gap: 14px;
+            }
+
+            .fields {
+                display: grid;
+                gap: 14px;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            }
+
+            .field {
+                display: grid;
+                gap: 8px;
+            }
+
+            .field label {
+                font-weight: 700;
+            }
+
+            .inline-control {
+                display: flex;
+                gap: 8px;
+            }
+
+            .inline-control select,
+            .inline-control input {
+                flex: 1;
+            }
+
+            .inline-control button {
+                width: auto;
+                min-height: 52px;
+                padding: 0 14px;
+                flex: 0 0 auto;
+            }
+
+            .field input,
+            .field select,
+            .field button,
+            #join_launch,
+            #launch,
+            #launch_server,
+            #install_app {
+                width: 100%;
+                min-height: 52px;
+                border-radius: 14px;
+                border: 1px solid rgba(139, 92, 246, 0.24);
+                padding: 0 14px;
+                font-size: 1rem;
+                color: var(--text);
+                background: var(--surface-strong);
+            }
+
+            .field input,
+            .field select {
+                appearance: none;
+            }
+
+            button,
+            #join_launch,
+            #launch,
+            #launch_server,
+            #install_app {
+                cursor: pointer;
+                border-color: rgba(139, 92, 246, 0.6);
+                background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+                color: #f0eafa;
+                font-weight: 800;
+            }
+
+            button:disabled,
+            #install_app:disabled {
+                cursor: default;
+                opacity: 0.65;
+            }
+
+            hr {
+                border: 0;
+                border-top: 1px solid rgba(139, 92, 246, 0.18);
+                margin: 4px 0;
+            }
+
+            .actions {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .actions > * {
+                flex: 1 1 240px;
+            }
+
+            .compat-note {
+                border-style: dashed;
+            }
+
+            #temporary_console {
+                white-space: pre-wrap;
+            }
+
+            #temporary_console pre {
+                margin: 0;
+                font-family: "Lucida Console", Monaco, monospace;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+
+            [hidden] {
+                display: none !important;
+            }
+
+            @media (max-width: 700px) {
+                body {
+                    padding-left: max(12px, env(safe-area-inset-left));
+                    padding-right: max(12px, env(safe-area-inset-right));
+                }
+
+                .install-panel {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .panel {
+                    border-radius: 16px;
+                    padding: 14px;
+                }
+            }
+
+            .server-grid {
+                display: grid;
+                gap: 14px;
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            }
+
+            .server-card {
+                border-radius: 14px;
+                overflow: hidden;
+                border: 1px solid var(--surface-border);
+                background: var(--surface-strong);
+                display: flex;
+                flex-direction: column;
+            }
+
+            .server-card-image {
+                height: 130px;
+                background-size: cover;
+                background-position: center;
+                background-color: #110823;
+            }
+
+            .server-card-body {
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                flex: 1;
+            }
+
+            .server-card-name {
+                font-size: 1.05rem;
+                font-weight: 800;
+                margin: 0;
+            }
+
+            .server-card-motd {
+                font-size: 0.8rem;
+                color: var(--muted);
+                font-style: italic;
+                margin: 0;
+            }
+
+            .server-card-desc {
+                font-size: 0.85rem;
+                color: var(--muted);
+                margin: 0;
+                flex: 1;
+                line-height: 1.4;
+            }
+
+            .server-card-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .server-card-players {
+                font-size: 0.78rem;
+                color: var(--muted);
+            }
+
+            .server-card-footer button {
+                min-height: 36px;
+                padding: 0 16px;
+                font-size: 0.9rem;
+                border-radius: 10px;
+                width: auto;
+                flex-shrink: 0;
+            }
+
+            .server-card.color-red  { border-color: rgba(239,68,68,0.5); }
+            .server-card.color-red  .server-card-image { border-bottom: 3px solid rgba(239,68,68,0.8); }
+            .server-card.color-blue { border-color: rgba(59,130,246,0.5); }
+            .server-card.color-blue .server-card-image { border-bottom: 3px solid rgba(59,130,246,0.8); }
+            .server-card.color-yellow { border-color: rgba(234,179,8,0.5); }
+            .server-card.color-yellow .server-card-image { border-bottom: 3px solid rgba(234,179,8,0.8); }
+            .server-card.color-green { border-color: rgba(34,197,94,0.5); }
+            .server-card.color-green .server-card-image { border-bottom: 3px solid rgba(34,197,94,0.8); }
+
+            /* ===== Auth ===== */
+            .hero-head {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-bottom: 8px;
+            }
+
+            .hero-head h1 {
+                margin: 0;
+            }
+
+            .signin-btn {
+                width: auto !important;
+                min-height: 38px !important;
+                padding: 0 18px !important;
+                font-size: 0.9rem !important;
+                border-radius: 10px !important;
+                font-weight: 700 !important;
+                flex-shrink: 0;
+            }
+
+            .auth-modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 999;
+                background: rgba(0, 0, 0, 0.72);
+                backdrop-filter: blur(4px);
+                align-items: center;
+                justify-content: center;
+            }
+
+            .auth-modal-overlay.open {
+                display: flex;
+            }
+
+            .auth-modal {
+                background: var(--surface-strong);
+                border: 1px solid var(--surface-border);
+                border-radius: 20px;
+                padding: 28px 24px;
+                width: min(420px, 92vw);
+                box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+                display: grid;
+                gap: 16px;
+            }
+
+            .auth-modal h2 {
+                margin: 0;
+                font-size: 1.3rem;
+                font-weight: 800;
+                color: var(--text);
+            }
+
+            .auth-modal .field input {
+                width: 100%;
+            }
+
+            .auth-message {
+                padding: 10px 14px;
+                border-radius: 10px;
+                font-size: 0.88rem;
+                font-weight: 700;
+                display: none;
+            }
+
+            .auth-message.error  { background: rgba(239,68,68,0.22);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+            .auth-message.ok     { background: rgba(34,197,94,0.18);   color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+
+            .auth-modal .actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .auth-modal .actions button {
+                width: 100%;
+                min-height: 40px;
+                max-height: 44px;
+                padding: 0 18px;
+                font-size: 0.95rem;
+                border-radius: 12px;
+                flex: none;
+            }
+
+            .auth-modal .actions .btn-secondary {
+                background: var(--surface);
+                border-color: rgba(139, 92, 246, 0.3);
+                color: var(--muted);
+                font-weight: 600;
+            }
+        </style>
   </head>
-  <body style="background-color: black">
-    <div id="temporary_console" class="console" style="color: white"></div>
-    <div id="launch_form" class="console" style="color: white; display: none;">
-      <hr>
-      <b>Select Network Proxy:</b>
-      <select id="select_proxy">
-          <!-- filled by javascript -->
-      </select>
+    <body>
+        <main class="landing-shell">
+            <section class="hero">
+                <div class="hero-head">
+                    <h1>Bloxel</h1>
+                    <button id="signin_btn" type="button" class="signin-btn">Sign In</button>
+                </div>
+                <p>Installable on iPhone, iPad, and Android with a mobile-safe launcher layout. Gameplay still works best in landscape with a keyboard, mouse, or controller.</p>
+            </section>
 
-      <br/>
+            <!-- Auth modal -->
+            <div id="auth_modal_overlay" class="auth-modal-overlay" role="dialog" aria-modal="true" aria-label="Sign in">
+                <div class="auth-modal">
+                    <h2 id="auth_modal_title">EtherDeck Account</h2>
 
-      <b>Select language:</b>
-      <select id="select_language">
-          <!-- filled by javascript -->
-      </select>
+                    <div class="section">
+                        <div class="field">
+                            <label for="auth_username">Username</label>
+                            <input type="text" id="auth_username" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Enter username">
+                        </div>
+                        <div class="field">
+                            <label for="auth_password">Password</label>
+                            <input type="password" id="auth_password" autocomplete="current-password" placeholder="Enter password">
+                        </div>
+                    </div>
 
-      <hr>
-      <button id="launch" style="width: 300px; height: 50px; font-size: 20pt;">Launch Minetest</button>
-      <br/>
-      <hr>
-      <b style="font-size: 20pt;">Run Server In Browser</b>
-      <br/>
-      <b>Player Name:</b>
-      <input style="border: 2px solid black; width: 400px; height: 2em" type="text" id="multiplayer_username" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max">
-      <br/>
-      <b>Game:</b>
-      <select id="multiplayer_game">
-          <option value="minetest_game">minetest_game</option>
-      </select>
-      <br/>
-      <span>After launch, copy the URL and use it to open clients.</span>
-      <br/>
-      <span>Closing this page shuts down the server and ends the game.</span>
-      <br/>
-      <button id="launch_server" style="width: 300px; height: 50px; font-size: 20pt;">Launch Server</button>
+                    <div id="auth_message" class="auth-message"></div>
 
-    </div>
-    <div id="join_form" class="console" style="color: white; display: none;">
-      <b>Joining game:</b>
-      <br/>
-      <b>Player Name:</b>
-      <input style="border: 2px solid black; width: 400px; height: 2em" type="text" id="join_username" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max">
-      <br/>
-      <button id="join_launch">Join Game</button>
-    </div>
+                    <div class="actions">
+                        <button id="auth_login_btn" type="button">Sign In</button>
+                        <button id="auth_register_btn" type="button">Register</button>
+                        <button id="auth_back_btn" type="button" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <section id="install_panel" class="panel install-panel" hidden>
+                <div>
+                    <strong>Add to Home Screen</strong>
+                    <p id="install_hint">Install this build for a full-screen launcher.</p>
+                </div>
+                <button id="install_app" type="button">Install</button>
+            </section>
+
+            <div class="stack">
+                <div id="temporary_console" class="panel"></div>
+
+                <section id="launch_form" class="panel section" style="display: none;">
+                    <div>
+                        <span class="section-title">Launcher</span>
+                        <p class="section-copy">Pick a proxy and language before starting the game or hosting a browser-based server.</p>
+                    </div>
+
+                    <div class="fields">
+                        <div class="field">
+                            <label for="select_proxy">Network Proxy</label>
+                            <select id="select_proxy">
+                                <!-- filled by javascript -->
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="select_language">Language</label>
+                            <select id="select_language">
+                                <!-- filled by javascript -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="section-title">Run Server In Browser</span>
+                        <p class="section-copy">After launch, copy the URL and open it on client devices. Closing this page shuts down the hosted server.</p>
+                    </div>
+
+                    <div class="fields">
+                        <div class="field">
+                            <label for="multiplayer_username">Player Name</label>
+                            <input type="text" id="multiplayer_username" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false">
+                        </div>
+
+                        <div class="field">
+                            <label for="multiplayer_game">Game</label>
+                            <select id="multiplayer_game">
+                                <option value="minetest_game">minetest_game</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <p class="field-note">Mobile launch is supported, but active play still depends on browser input support and available peripherals.</p>
+
+                    <div class="actions">
+                        <button id="launch_server" type="button">Launch Server</button>
+                    </div>
+                </section>
+
+                <section id="server_list_form" class="panel section" style="display: none;">
+                    <div>
+                        <span class="section-title">Servers</span>
+                        <p class="section-copy">Enter your player name then click Join to connect to a server.</p>
+                    </div>
+                    <div class="field">
+                        <label for="player_name">Player Name</label>
+                        <input type="text" id="player_name" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Enter your name...">
+                    </div>
+                    <div id="server_cards" class="server-grid">
+                        <p style="color:var(--muted)">Loading servers…</p>
+                    </div>
+                </section>
+
+                <section id="join_code_form" class="panel section" style="display: none;">
+                    <div>
+                        <span class="section-title">Join a Friend</span>
+                        <p class="section-copy">Paste the join link or code your friend shared with you, then click Join.</p>
+                    </div>
+
+                    <div class="fields">
+                        <div class="field">
+                            <label for="join_code_input">Join Code or Link</label>
+                            <input type="text" id="join_code_input" placeholder="Paste code or link here..." autocapitalize="off" autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button id="join_code_launch" type="button">Join Game</button>
+                    </div>
+                </section>
+
+                <section id="join_form" class="panel section" style="display: none;">
+                    <div>
+                        <span class="section-title">Join Game</span>
+                        <p class="section-copy">Enter a player name to join the browser-hosted session linked from this URL.</p>
+                    </div>
+
+                    <div class="fields">
+                        <div class="field">
+                            <label for="join_username">Player Name</label>
+                            <input type="text" id="join_username" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false">
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button id="join_launch" type="button">Join Game</button>
+                    </div>
+                </section>
+
+                <section class="panel compat-note">
+                    <div>
+                        <span class="section-title">Compatibility Notes</span>
+                        <p>Canvas sizing is now capped for mobile browsers so the render target stays within sane bounds. This build is installable on Android and can be added to the home screen on iOS. VR and WebXR are not implemented in this port yet, so headset mode is still unavailable.</p>
+                    </div>
+                </section>
+            </div>
+        </main>
     <script type="text/javascript" src="%__RELEASE_UUID__%/launcher.js"></script>
     <script type="text/javascript">
+            if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                            navigator.serviceWorker.register('./service-worker.js').catch(err => {
+                                    console.warn('Service worker registration failed', err);
+                            });
+                    });
+            }
+
+            function isIOSHomeScreenEligible() {
+                    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+            }
+
+            function isStandaloneDisplay() {
+                    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            }
+
+            let deferredInstallPrompt = null;
+
+            function setupInstallPanel() {
+                    const installPanel = document.getElementById('install_panel');
+                    const installButton = document.getElementById('install_app');
+                    const installHint = document.getElementById('install_hint');
+                    if (!installPanel || !installButton || !installHint) {
+                            return;
+                    }
+
+                    if (isStandaloneDisplay()) {
+                            installPanel.hidden = true;
+                            return;
+                    }
+
+                    if (isIOSHomeScreenEligible()) {
+                            installPanel.hidden = false;
+                            installButton.textContent = 'How to Install';
+                            installHint.textContent = 'On iPhone and iPad, use Share and then Add to Home Screen.';
+                    }
+
+                    installButton.addEventListener('click', async () => {
+                            if (deferredInstallPrompt) {
+                                    deferredInstallPrompt.prompt();
+                                    await deferredInstallPrompt.userChoice;
+                                    deferredInstallPrompt = null;
+                                    installPanel.hidden = true;
+                                    return;
+                            }
+
+                            if (isIOSHomeScreenEligible()) {
+                                    alert('Open the Share menu in Safari, then choose Add to Home Screen.');
+                            }
+                    });
+
+                    window.addEventListener('beforeinstallprompt', (event) => {
+                            event.preventDefault();
+                            deferredInstallPrompt = event;
+                            installPanel.hidden = false;
+                            installButton.textContent = 'Install';
+                            installHint.textContent = 'Install this build for a full-screen launcher and faster repeat launches.';
+                    });
+
+                    window.addEventListener('appinstalled', () => {
+                            deferredInstallPrompt = null;
+                            installPanel.hidden = true;
+                    });
+            }
 
       // Reduce memory and network usage
       function enableMemorySaving(mtl) {
@@ -60,12 +641,27 @@
           mtl.setConf('max_block_generate_distance', 5);
       }
 
+      function isTouchDevice() {
+          return window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+      }
+
+      function enableTouchDefaults(mtl) {
+          if (!isTouchDevice()) {
+              return;
+          }
+          // Luanti mobile settings from minetest.conf.example / defaultsettings.
+          mtl.setConf('touch_controls', 'true');
+          mtl.setConf('touch_gui', 'true');
+          mtl.setConf('fixed_virtual_joystick', 'true');
+          mtl.setConf('virtual_joystick_triggers_aux1', 'false');
+      }
+
       const launchForm = document.getElementById('launch_form');
       const joinForm = document.getElementById('join_form');
       const tcon = document.getElementById('temporary_console');
       function tcon_print(prefix, line) {
           if (prefix) {
-              for (child of tcon.childNodes) {
+              for (const child of tcon.childNodes) {
                   if (child.nodeName == 'PRE' && child.innerText.startsWith(prefix)) {
                       child.innerText = prefix + line;
                       return;
@@ -80,6 +676,10 @@
       function wipePage() {
           launchForm.remove();
           joinForm.remove();
+          const joinCodeForm = document.getElementById('join_code_form');
+          if (joinCodeForm) joinCodeForm.remove();
+          const serverListForm = document.getElementById('server_list_form');
+          if (serverListForm) serverListForm.remove();
           tcon.remove();
       }
 
@@ -88,10 +688,13 @@
               joinForm.style.display = 'block';
           } else {
               launchForm.style.display = 'block';
+              document.getElementById('join_code_form').style.display = 'block';
+              document.getElementById('server_list_form').style.display = 'block';
           }
 
           const select_proxy = document.getElementById('select_proxy');
           const proxies = [
+              [ "wss://bc3d.etherdeck.org/proxy", "Default" ],
               [ "wss://na1.dustlabs.io/mtproxy", "North America" ],
               [ "wss://sa1.dustlabs.io/mtproxy", "South America" ],
               [ "wss://eu1.dustlabs.io/mtproxy", "Europe" ],
@@ -114,15 +717,112 @@
           });
           select_language.value = getDefaultLanguage();
 
-          const launch = document.getElementById('launch');
-          launch.addEventListener('click', () => {
+          async function joinServer(server) {
+              const username = document.getElementById('player_name').value.trim();
+              if (!username) { alert('Enter a player name first'); return; }
               const proxyIndex = document.getElementById('select_proxy').value;
               const proxy = proxies[proxyIndex][0];
               wipePage();
               mtl.setProxy(proxy);
+              enableTouchDefaults(mtl);
               mtl.setLang(select_language.value);
-              mtl.launch(args);
-          });
+              const joinArgs = new MinetestArgs();
+              joinArgs.name = username;
+              joinArgs.password = etherdeckAuth.getPassword() || '';
+              joinArgs.address = server.address;
+              joinArgs.port = parseInt(server.port);
+              joinArgs.go = true;
+              mtl.launch(joinArgs);
+          }
+
+          function renderServerList(servers) {
+              const grid = document.getElementById('server_cards');
+              if (!grid) return;
+              grid.innerHTML = '';
+              if (!servers || !servers.length) {
+                  grid.innerHTML = '<p style="color:var(--muted)">No servers available.</p>';
+                  return;
+              }
+
+              function resolveServerImage(url) {
+                  if (!url || !/^https?:\/\//.test(url)) return '';
+                  // COEP=require-corp blocks many third-party images in isolated mode.
+                  if (window.crossOriginIsolated) {
+                      try {
+                          const origin = new URL(url, window.location.href).origin;
+                          if (origin !== window.location.origin) return '';
+                      } catch (_err) {
+                          return '';
+                      }
+                  }
+                  return url;
+              }
+
+              servers.forEach(server => {
+                  const card = document.createElement('div');
+                  card.className = 'server-card' + (server.color ? ' color-' + server.color : '');
+
+                  const imgEl = document.createElement('div');
+                  imgEl.className = 'server-card-image';
+                  const safeImg = resolveServerImage(server.image);
+                  if (safeImg) imgEl.style.backgroundImage = 'url("' + safeImg.replace(/"/g, '%22') + '")';
+                  card.appendChild(imgEl);
+
+                  const body = document.createElement('div');
+                  body.className = 'server-card-body';
+
+                  const nameEl = document.createElement('p');
+                  nameEl.className = 'server-card-name';
+                  nameEl.textContent = server.name || server.id || 'Server';
+                  body.appendChild(nameEl);
+
+                  if (server.motd) {
+                      const motd = document.createElement('p');
+                      motd.className = 'server-card-motd';
+                      motd.textContent = '\u201c' + server.motd + '\u201d';
+                      body.appendChild(motd);
+                  }
+
+                  if (server.description) {
+                      const desc = document.createElement('p');
+                      desc.className = 'server-card-desc';
+                      desc.textContent = server.description;
+                      body.appendChild(desc);
+                  }
+
+                  const footer = document.createElement('div');
+                  footer.className = 'server-card-footer';
+
+                  const playersEl = document.createElement('span');
+                  playersEl.className = 'server-card-players';
+                  if (server.players && server.players !== 'not supported') {
+                      playersEl.textContent = '\u{1F465} ' + server.players;
+                  }
+                  footer.appendChild(playersEl);
+
+                  const joinBtn = document.createElement('button');
+                  joinBtn.type = 'button';
+                  joinBtn.textContent = 'Join';
+                  joinBtn.addEventListener('click', () => joinServer(server));
+                  footer.appendChild(joinBtn);
+
+                  body.appendChild(footer);
+                  card.appendChild(body);
+                  grid.appendChild(card);
+              });
+          }
+
+          fetch('./servers.json')
+              .then(r => r.json())
+              .then(data => {
+                  const list = Array.isArray(data) ? data : (data.servers || []);
+                  renderServerList(list);
+              })
+              .catch(() => {
+                  const grid = document.getElementById('server_cards');
+                  if (grid) grid.innerHTML = '<p style="color:var(--muted)">Could not load server list.</p>';
+              });
+
 
           const launchServer = document.getElementById('launch_server');
           launchServer.addEventListener('click', async () => {
@@ -133,6 +833,7 @@
                   alert("Empty username");
                   return;
               }
+
               wipePage();
 
               const proxy = proxies[proxyIndex][0];
@@ -147,14 +848,19 @@
               args.extra.push('--withserver');
               args.gameid = game;
               args.name = username;
+              args.password = etherdeckAuth.getPassword() || '';
               args.address = '127.0.0.1';
               args.port = 30000;
               args.go = true;
               history.pushState({}, "", `?proxy=${proxyIndex}&game=${game}&join=${clientCode}`);
               mtl.setVPN(serverCode, clientCode);
               enableMemorySaving(mtl);
+              enableTouchDefaults(mtl);
               mtl.setLang(select_language.value);
               mtl.launch(args);
+              // Show join link on the visor after launch
+              const joinUrl = window.location.origin + window.location.pathname + `?proxy=${proxyIndex}&game=${game}&join=${clientCode}`;
+              setTimeout(() => { if (typeof setVisorJoinCode === 'function') setVisorJoinCode(joinUrl); }, 500);
           });
 
           const joinLaunch = document.getElementById('join_launch');
@@ -171,11 +877,45 @@
               const args = new MinetestArgs();
               args.gameid = join_game;
               args.name = username;
+              args.password = etherdeckAuth.getPassword() || '';
               args.address = '172.16.0.1';
               args.port = 30000;
               args.go = true;
               mtl.setVPN(null, join_code);
               enableMemorySaving(mtl);
+              enableTouchDefaults(mtl);
+              mtl.setLang(select_language.value);
+              mtl.launch(args);
+          });
+
+          const joinCodeLaunch = document.getElementById('join_code_launch');
+          joinCodeLaunch.addEventListener('click', async () => {
+              const raw = document.getElementById('join_code_input').value;
+              if (!raw.trim()) { alert('Paste a join code or link first'); return; }
+              // Reuse the player name from the server launch field
+              let username = document.getElementById('multiplayer_username').value.trim();
+              if (!username) {
+                  username = prompt('Enter your player name:');
+                  if (!username || !username.trim()) return;
+                  username = username.trim();
+              }
+              const parsed = parseJoinCode(raw);
+              if (!parsed) { alert('Could not read join code. Paste the full link your friend shared.'); return; }
+              const proxyIdx = parseInt(parsed.proxy) || 0;
+              const safeProxyIdx = proxyIdx >= 0 && proxyIdx < proxies.length ? proxyIdx : 0;
+              wipePage();
+              mtl.setProxy(proxies[safeProxyIdx][0]);
+              mtl.addPack(parsed.game);
+              const args = new MinetestArgs();
+              args.gameid = parsed.game;
+              args.name = username;
+              args.password = etherdeckAuth.getPassword() || '';
+              args.address = '172.16.0.1';
+              args.port = 30000;
+              args.go = true;
+              mtl.setVPN(null, parsed.code);
+              enableMemorySaving(mtl);
+              enableTouchDefaults(mtl);
               mtl.setLang(select_language.value);
               mtl.launch(args);
           });
@@ -224,9 +964,208 @@
           join_proxy = peek_params.get("proxy");
       }
 
+      function parseJoinCode(raw) {
+          raw = raw.trim();
+          // Accept a full URL or just query string portion
+          let params;
+          try {
+              const url = raw.includes('://') ? new URL(raw) : new URL('https://x/?' + (raw.startsWith('?') ? raw.slice(1) : raw));
+              params = url.searchParams;
+          } catch (e) {
+              // Fallback: treat raw value as the bare join code
+              return { code: raw, proxy: '0', game: 'minetest_game' };
+          }
+          const code = params.get('join');
+          if (!code) return null;
+          return { code, proxy: params.get('proxy') || '0', game: params.get('game') || 'minetest_game' };
+      }
+
       const args = MinetestArgs.fromQueryString(window.location.search);
-      tcon_print("", "Minetest Arguments: " + JSON.stringify(args.toArray(), null, '    '));
+      tcon_print("", "Arguments: " + JSON.stringify(args.toArray(), null, '    '));
       tcon_print("", "Data Packs: " + JSON.stringify(args.packs, null, '    '));
+
+      // ===== EtherDeck Auth =====
+      class EtherDeckAuth {
+          constructor() {
+              this.apiUrl = 'https://tjc.ngrok-free.app/auth.php';
+              this.currentUser = null;
+              this.loadSession();
+          }
+
+          async request(action, data) {
+              try {
+                  const resp = await fetch(`${this.apiUrl}?action=${action}`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(data)
+                  });
+                  return await resp.json();
+              } catch (err) {
+                  return { success: false, message: 'Network error: ' + err.message };
+              }
+          }
+
+          async register(username, password) {
+              const result = await this.request('register', { username, password });
+              if (result.success) {
+                  this.currentUser = result.data;
+                  this.currentUser.password = password;
+                  this.saveSession();
+              }
+              return result;
+          }
+
+          async login(username, password) {
+              const result = await this.request('login', { username, password });
+              if (result.success) {
+                  this.currentUser = result.data;
+                  this.currentUser.password = password;
+                  this.saveSession();
+              }
+              return result;
+          }
+
+          logout() {
+              this.currentUser = null;
+              localStorage.removeItem('etherdeck_session');
+              this.updateUI();
+          }
+
+          saveSession() {
+              if (this.currentUser) {
+                  localStorage.setItem('etherdeck_session', JSON.stringify(this.currentUser));
+              }
+              this.updateUI();
+          }
+
+          loadSession() {
+              const saved = localStorage.getItem('etherdeck_session');
+              if (saved) {
+                  try { this.currentUser = JSON.parse(saved); } catch (_) {}
+              }
+          }
+
+          isLoggedIn()  { return this.currentUser !== null; }
+          getUsername() { return this.currentUser ? this.currentUser.username : null; }
+          getPassword() { return this.currentUser ? this.currentUser.password : null; }
+
+          updateUI() {
+              const btn = document.getElementById('signin_btn');
+              const playerNameInput      = document.getElementById('player_name');
+              const multiplayerUsernameInput = document.getElementById('multiplayer_username');
+              if (!btn) return;
+              if (this.isLoggedIn()) {
+                  btn.textContent = this.getUsername() + ' \u2022 Sign Out';
+                  // Fill and lock both username fields
+                  [playerNameInput, multiplayerUsernameInput].forEach(el => {
+                      if (!el) return;
+                      el.value    = this.getUsername();
+                      el.readOnly = true;
+                      el.style.opacity = '0.6';
+                      el.style.cursor  = 'not-allowed';
+                  });
+              } else {
+                  btn.textContent = 'Sign In';
+                  // Unlock fields
+                  [playerNameInput, multiplayerUsernameInput].forEach(el => {
+                      if (!el) return;
+                      el.value    = '';
+                      el.readOnly = false;
+                      el.style.opacity = '';
+                      el.style.cursor  = '';
+                  });
+              }
+          }
+      }
+
+      const etherdeckAuth = new EtherDeckAuth();
+
+      // Sign-in button
+      {
+          const overlay   = document.getElementById('auth_modal_overlay');
+          const signinBtn = document.getElementById('signin_btn');
+          const loginBtn  = document.getElementById('auth_login_btn');
+          const registerBtn = document.getElementById('auth_register_btn');
+          const backBtn   = document.getElementById('auth_back_btn');
+          const msgEl     = document.getElementById('auth_message');
+          const userInput = document.getElementById('auth_username');
+          const passInput = document.getElementById('auth_password');
+
+          function showMsg(text, isError) {
+              msgEl.textContent = text;
+              msgEl.className = 'auth-message ' + (isError ? 'error' : 'ok');
+              msgEl.style.display = 'block';
+          }
+
+          function clearMsg() {
+              msgEl.style.display = 'none';
+              msgEl.textContent = '';
+              msgEl.className = 'auth-message';
+          }
+
+          function openModal() {
+              clearMsg();
+              userInput.value = '';
+              passInput.value = '';
+              overlay.classList.add('open');
+              userInput.focus();
+          }
+
+          function closeModal() {
+              overlay.classList.remove('open');
+          }
+
+          signinBtn.addEventListener('click', () => {
+              if (etherdeckAuth.isLoggedIn()) {
+                  etherdeckAuth.logout();
+              } else {
+                  openModal();
+              }
+          });
+
+          overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+          backBtn.addEventListener('click', closeModal);
+
+          passInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn.click(); });
+
+          loginBtn.addEventListener('click', async () => {
+              const u = userInput.value.trim();
+              const p = passInput.value;
+              if (!u || !p) { showMsg('Enter both username and password.', true); return; }
+              loginBtn.disabled = true;
+              loginBtn.textContent = 'Signing in…';
+              const result = await etherdeckAuth.login(u, p);
+              if (result.success) {
+                  showMsg('Signed in!', false);
+                  setTimeout(closeModal, 800);
+              } else {
+                  showMsg(result.message, true);
+              }
+              loginBtn.disabled = false;
+              loginBtn.textContent = 'Sign In';
+          });
+
+          registerBtn.addEventListener('click', async () => {
+              const u = userInput.value.trim();
+              const p = passInput.value;
+              if (!u || !p) { showMsg('Enter both username and password.', true); return; }
+              registerBtn.disabled = true;
+              registerBtn.textContent = 'Registering…';
+              const result = await etherdeckAuth.register(u, p);
+              if (result.success) {
+                  showMsg('Account created! You are now signed in.', false);
+                  setTimeout(closeModal, 1000);
+              } else {
+                  showMsg(result.message, true);
+              }
+              registerBtn.disabled = false;
+              registerBtn.textContent = 'Register';
+          });
+
+          // Initialise button label with saved session
+          etherdeckAuth.updateUI();
+      }
+      // ===== end EtherDeck Auth =====
 
       const mtl = new MinetestLauncher();
       mtl.addPacks(args.packs);
@@ -247,6 +1186,8 @@
           tcon_print("", err);
           tcon_print("", "***********************************************");
       };
+
+            setupInstallPanel();
     </script>
   </body>
 </html>

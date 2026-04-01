@@ -1,0 +1,69 @@
+- id: "survival"
+  name: "Survival"
+  address: "7.7.7.7"
+  port: 7777
+  motd: "Welcome to my survival server"
+  players: "not supported"
+  image: "https://tjcr.etherdeck.org/bg.jpg"
+  color: "red"
+  description: "Welcome to survival mode a amazing server where you can kill your friends in game, build BIGGG houses and survive the voxel world!"
+
+- id: "creative"
+  name: "Creative"
+  address: "3.4.4.5"
+  port: 34455
+  motd: "HEllllo everybody"
+  players: "P/20"
+  image: "https://tjcr.etherdeck.org/creative.png"
+  color: "blue"
+  description: "Build epic stuff with your friends - warning: anything 18+ or deemed bad is bannable!"
+
+- id: "tnttag"
+  name: "TNT-Tag"
+  address: "3.4.4.6"
+  port: 34456
+  motd: "OH HELLLL YEAH BOIIII"
+  players: "P/30"
+  image: "https://tjcr.etherdeck.org/tnt.webp"
+  color: "blue"
+  description: "Kill your friends in epic battles. Destroy people from other nations and fight with TNT all day every day!"
+
+- id: "backrooms"
+  name: "Backrooms"
+  address: "3.4.4.7"
+  port: 34457
+  motd: "HElP????"
+  players: "-B/30"
+  image: "https://tjcr.etherdeck.org/bc.webp"
+  color: "yellow"
+  description: "Anyone there? Hello?"
+
+- id: "yams"
+  name: "YAMS"
+  address: "3.4.4.8"
+  port: 34458
+  motd: "RPG"
+  players: "-p/30"
+  image: "https://tjcr.etherdeck.org/sp.webp"
+  color: "red"
+  description: "How did we get here again?"
+
+- id: "exit"
+  name: "EXIT"
+  address: "3.4.4.9"
+  port: 34459
+  motd: "have funnnnnn"
+  players: "-p/30"
+  image: "https://tjcr.etherdeck.org/ex.png"
+  color: "green"
+  description: "why am i here?"
+
+- id: "ctf"
+  name: "Capture The Flag"
+  address: "2.4.6.35"
+  port: 22234
+  motd: "goodness be careful with that sword"
+  players: "PVP/30"
+  image: "https://webcraft.etherdeck.org/flag.png"
+  color: "red"
+  description: "Battle others in an epic war of player VS player"

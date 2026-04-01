@@ -24,6 +24,50 @@ includes an `.htaccess` file which sets headers that are required (by browsers) 
 If your webserver does not recognize `.htaccess` files, you may need to set the headers in
 another way.
 
+Mobile / PWA Support
+--------------------
+
+The generated site is installable as a web app on Android and can be added to the home screen on
+iOS. The launcher now uses mobile-safe viewport sizing and caps the native canvas resolution so the
+render target does not grow beyond reasonable limits on phones and tablets.
+
+Gameplay on mobile browsers still depends on available input methods. Touch-first controls are not
+implemented in this repository, so a keyboard, mouse, or controller may still be needed depending
+on the browser and device.
+
+VR / headset support is not implemented. The current port uses the existing browser canvas path and
+would need explicit WebXR integration in the engine and render loop to support immersive VR.
+
+Local HTTPS Testing (SharedArrayBuffer)
+---------------------------------------
+
+SharedArrayBuffer requires cross-origin isolation. For this app that means HTTPS plus these headers
+on the document and assets:
+
+* `Cross-Origin-Opener-Policy: same-origin`
+* `Cross-Origin-Embedder-Policy: require-corp`
+
+This repository includes a local HTTPS server that sets those headers automatically.
+
+From the repository root:
+
+    ./build_www.sh
+    bash ./serve_https.sh
+
+Then open:
+
+    https://localhost:8443
+
+Notes:
+
+* `serve_https.sh` creates a self-signed certificate in `.certs/` on first run.
+* If your browser warns about the certificate, accept/trust it for local testing.
+* To test from another device on your LAN, run with host/port overrides:
+
+      HOST=0.0.0.0 PORT=8443 bash ./serve_https.sh
+
+  and open `https://<your-machine-ip>:8443` on the device.
+
 Network Play
 ------------
 

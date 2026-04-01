@@ -5,18 +5,31 @@ const RELEASE_DIR = '%__RELEASE_UUID__%'; // set by build_www.sh
 const DEFAULT_PACKS_DIR = RELEASE_DIR + '/packs';
 
 const rtCSS = `
+:root {
+    color-scheme: dark;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+    background-color: black;
+}
+
 body {
-  font-family: arial;
+    font-family: Verdana, Geneva, sans-serif;
   margin: 0;
-  padding: none;
+    padding: 0;
   background-color: black;
+    color: #dbe4f0;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 .emscripten {
-  color: #aaaaaa;
-  padding-right: 0;
-  margin-left: auto;
-  margin-right: auto;
+    color: #dbe4f0;
   display: block;
 }
 
@@ -27,29 +40,280 @@ div.emscripten {
 
 /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
 canvas.emscripten {
-  border: 0px none;
+    border: 0 none;
   background-color: black;
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    touch-action: none;
 }
 
 #controls {
-  display: inline-block;
-  vertical-align: top;
-	height: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+#controls span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#controls select,
+#controls input[type="button"] {
+    min-height: 40px;
+    border: 1px solid #3b4756;
+    border-radius: 10px;
+    background: #0d131a;
+    color: #f4f7fb;
+    padding: 0 12px;
+}
+
+#visor_toggle {
+    min-height: 40px;
+    border: 1px solid #3b4756;
+    border-radius: 10px;
+    background: #0d131a;
+    color: #f4f7fb;
+    padding: 0 12px;
+    cursor: pointer;
+}
+
+#controls_hint {
+    color: #9ca9bc;
+}
+
+#join_code_banner {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: rgba(10, 40, 22, 0.9);
+    border: 1px solid #2a6040;
+    border-radius: 10px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: #a8f0c8;
+    cursor: pointer;
+    user-select: all;
+    max-width: 280px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#join_code_banner.visible {
+    display: inline-flex;
+}
+
+#join_code_banner .jcb-label {
+    font-size: 10px;
+    color: #6aad8a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+#join_code_text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#join_code_banner .jcb-copy-hint {
+    font-size: 10px;
+    color: #6aad8a;
+    flex-shrink: 0;
 }
 
 .console {
-  width: 100%;
+    width: min(100%, 1200px);
   margin: 0 auto;
-  margin-top: 0px;
-  border-left: 0px;
-  border-right: 0px;
-  padding-left: 0px;
-  padding-right: 0px;
+    margin-top: 0;
+    border: 1px solid #1d2631;
+    border-radius: 12px;
+    padding-left: 0;
+    padding-right: 0;
   display: block;
-  background-color: black;
+    background-color: #020406;
   color: white;
   font-family: 'Lucida Console', Monaco, monospace;
   outline: none;
+    box-sizing: border-box;
+    resize: none;
+}
+
+#header {
+    flex: 0 0 auto;
+    padding: max(8px, env(safe-area-inset-top)) 12px 0;
+}
+
+#footer {
+    flex: 0 0 auto;
+    padding: 8px 12px max(10px, env(safe-area-inset-bottom));
+}
+
+#canvas_container {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    overflow: hidden;
+}
+
+body.visor-hidden #header,
+body.visor-hidden #footer {
+    display: none;
+}
+
+body.visor-hidden #canvas_container {
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+#overlay_visor_button {
+    display: none;
+    position: absolute;
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+    z-index: 10;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    background: rgba(13, 19, 26, 0.75);
+    color: #f4f7fb;
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+body.visor-hidden #overlay_visor_button {
+    display: inline-flex;
+    align-items: center;
+}
+
+#overlay_chat_button {
+    display: none;
+    position: absolute;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    right: max(10px, env(safe-area-inset-right));
+    z-index: 10;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    background: rgba(13, 19, 26, 0.75);
+    color: #f4f7fb;
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+body.visor-hidden #overlay_chat_button {
+    display: inline-flex;
+    align-items: center;
+}
+
+#chat_overlay {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    padding: 8px 12px max(10px, env(safe-area-inset-bottom));
+    background: rgba(13, 19, 26, 0.88);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    gap: 8px;
+}
+
+#chat_overlay.visible {
+    display: flex;
+}
+
+#chat_input {
+    flex: 1 1 auto;
+    min-height: 40px;
+    border: 1px solid #3b4756;
+    border-radius: 10px;
+    background: #0d131a;
+    color: #f4f7fb;
+    padding: 0 12px;
+    font-size: 15px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+#chat_send_btn, #chat_cancel_btn {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid #3b4756;
+    border-radius: 10px;
+    background: #0d131a;
+    color: #f4f7fb;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+#chat_send_btn {
+    background: #0d2b1a;
+    border-color: #2a6040;
+}
+
+#chat_mode_btn {
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid #3b4756;
+    border-radius: 10px;
+    background: #1a1a0d;
+    color: #c8b86a;
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+#chat_mode_btn.replace-mode {
+    background: #1a0d2b;
+    border-color: #5a3090;
+    color: #c89af4;
+}
+
+#progressbar_div {
+    margin: 0 auto 8px;
+    width: min(460px, 100%);
+}
+
+#progressbar {
+    width: 100%;
+    height: 12px;
+}
+
+@media (max-width: 700px) {
+    #controls {
+        font-size: 13px;
+    }
+
+    #controls span {
+        width: 100%;
+        justify-content: center;
+    }
 }
 `;
 
@@ -76,8 +340,17 @@ const rtHTML = `
           <option value="1:1">1:1</option>
         </select>
       </span>
-      <span><input id="console_button" type="button" value="Show Console" onclick="consoleToggle()"></span>
-      <span>(full screen: try F11 or Command+Shift+F)</span>
+            <span>
+                <input id="console_button" type="button" value="Show Console" onclick="consoleToggle()">
+                <input id="visor_toggle" type="button" value="Hide Visor" onclick="toggleVisorMode()">
+                <input id="chat_button" type="button" value="Chat" onclick="openChatOverlay()">
+            </span>
+            <span id="controls_hint">Landscape works best on phones and tablets.</span>
+        <div id="join_code_banner" onclick="copyJoinCode()">
+          <span class="jcb-label">Join&#160;Link:</span>
+          <span id="join_code_text"></span>
+          <span class="jcb-copy-hint">&#x2398;&#160;Copy</span>
+        </div>
     </span>
     <div id="progressbar_div" style="display: none">
       <progress id="progressbar" value="0" max="100">0%</progress>
@@ -87,6 +360,14 @@ const rtHTML = `
   </div>
 
   <div class="emscripten" id="canvas_container">
+    <button id="overlay_visor_button" onclick="toggleVisorMode()">Show Visor</button>
+    <button id="overlay_chat_button" onclick="openChatOverlay()">Chat</button>
+    <div id="chat_overlay">
+      <button id="chat_mode_btn" onclick="toggleChatMode()" title="Switch between Chat mode (opens chat) and Type mode (replaces text in current field)">Chat</button>
+      <input id="chat_input" type="text" placeholder="Chat message..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button id="chat_send_btn" onclick="sendChatMessage()">Send</button>
+      <button id="chat_cancel_btn" onclick="closeChatOverlay()">&#x2715;</button>
+    </div>
   </div>
 
   <div id="footer">
@@ -106,10 +387,222 @@ mtCanvas.tabIndex = "-1";
 mtCanvas.width = 1024;
 mtCanvas.height = 600;
 
+const MOBILE_LAYOUT_QUERY = '(pointer: coarse), (max-width: 900px)';
+const MOBILE_NATIVE_PIXEL_LIMIT = 1280 * 720;
+const DESKTOP_NATIVE_PIXEL_LIMIT = 2560 * 1440;
+const MOBILE_MAX_DIMENSION = 1600;
+const DESKTOP_MAX_DIMENSION = 2560;
+const MIN_NATIVE_CANVAS_WIDTH = 200;
+const MIN_NATIVE_CANVAS_HEIGHT = 120;
+
 var consoleButton;
 var consoleOutput;
 var progressBar;
 var progressBarDiv;
+var visorToggleButton;
+var overlayVisorButton;
+var visorHidden = false;
+var chatOverlay;
+var chatInput;
+var chatModeBtn;
+var chatReplaceMode = false;
+var joinCodeBanner;
+var joinCodeText;
+var joinCodeUrl = null;
+
+function setVisorJoinCode(url) {
+    joinCodeUrl = url;
+    if (joinCodeBanner && joinCodeText) {
+        joinCodeText.textContent = url;
+        joinCodeBanner.classList.add('visible');
+    }
+}
+
+function saveWorldNow() {
+    saveWorldNowOPFS();
+}
+
+function copyJoinCode() {
+    if (!joinCodeUrl) return;
+    navigator.clipboard.writeText(joinCodeUrl).then(() => {
+        const hint = joinCodeBanner ? joinCodeBanner.querySelector('.jcb-copy-hint') : null;
+        if (hint) {
+            hint.textContent = 'Copied!';
+            setTimeout(() => { hint.textContent = 'Tap to copy'; }, 1500);
+        }
+    }).catch(() => {});
+}
+
+function toggleChatMode() {
+    chatReplaceMode = !chatReplaceMode;
+    if (chatModeBtn) {
+        chatModeBtn.textContent = chatReplaceMode ? 'Replace' : 'Chat';
+        chatModeBtn.classList.toggle('replace-mode', chatReplaceMode);
+    }
+    if (chatInput) {
+        chatInput.placeholder = chatReplaceMode ? 'Replace textbox with...' : 'Chat message...';
+        chatInput.focus();
+    }
+}
+
+function openChatOverlay() {
+    if (!chatOverlay || !chatInput) return;
+    chatOverlay.classList.add('visible');
+    chatInput.value = '';
+    chatInput.focus();
+}
+
+function closeChatOverlay() {
+    if (!chatOverlay) return;
+    chatOverlay.classList.remove('visible');
+    mtCanvas.focus();
+}
+
+function sendChatMessage() {
+    const text = chatInput ? chatInput.value : '';
+    closeChatOverlay();
+    if (!text) return;
+
+    function fireKey(type, key, code, keyCode) {
+        mtCanvas.dispatchEvent(new KeyboardEvent(type, {
+            bubbles: true, cancelable: true,
+            key, code, keyCode, which: keyCode, charCode: type === 'keypress' ? keyCode : 0
+        }));
+    }
+
+    function typeText(str, callback) {
+        for (const ch of str) {
+            const code = ch.charCodeAt(0);
+            fireKey('keydown', ch, '', code);
+            fireKey('keypress', ch, '', code);
+            fireKey('keyup', ch, '', code);
+        }
+        setTimeout(callback, 30);
+    }
+
+    if (chatReplaceMode) {
+        // Select all existing text in the focused game textbox, then replace it
+        mtCanvas.dispatchEvent(new KeyboardEvent('keydown', {
+            bubbles: true, cancelable: true,
+            key: 'a', code: 'KeyA', keyCode: 65, which: 65, ctrlKey: true
+        }));
+        mtCanvas.dispatchEvent(new KeyboardEvent('keyup', {
+            bubbles: true, cancelable: true,
+            key: 'a', code: 'KeyA', keyCode: 65, which: 65, ctrlKey: true
+        }));
+        setTimeout(() => {
+            typeText(text, () => {
+                fireKey('keydown', 'Enter', 'Enter', 13);
+                fireKey('keyup', 'Enter', 'Enter', 13);
+            });
+        }, 60);
+    } else {
+        // Open in-game chat with T, then type
+        fireKey('keydown', 't', 'KeyT', 84);
+        fireKey('keyup', 't', 'KeyT', 84);
+        setTimeout(() => {
+            typeText(text, () => {
+                fireKey('keydown', 'Enter', 'Enter', 13);
+                fireKey('keyup', 'Enter', 'Enter', 13);
+            });
+        }, 120);
+    }
+}
+
+function setVisorMode(hidden) {
+    visorHidden = hidden;
+    document.body.classList.toggle('visor-hidden', hidden);
+    if (visorToggleButton) {
+        visorToggleButton.value = hidden ? 'Show Visor' : 'Hide Visor';
+    }
+    fixGeometry(true);
+}
+
+function toggleVisorMode() {
+    const willHide = !visorHidden;
+    setVisorMode(willHide);
+    if (willHide && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    }
+}
+
+function isMobileLayout() {
+    return window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
+}
+
+function getViewportSize() {
+    const viewport = window.visualViewport;
+    const width = viewport ? viewport.width : (document.documentElement.clientWidth || window.innerWidth || 0);
+    const height = viewport ? viewport.height : (window.innerHeight || document.documentElement.clientHeight || 0);
+    return {
+        width: Math.max(1, Math.floor(width)),
+        height: Math.max(1, Math.floor(height)),
+    };
+}
+
+function getResolutionScale(name) {
+    if (name == 'high') return 1.0;
+    if (name == 'medium') return 1.0 / 1.5;
+    return 0.5;
+}
+
+function clampNativeCanvasSize(width, height) {
+    let nextWidth = Math.max(MIN_NATIVE_CANVAS_WIDTH, Math.floor(width));
+    let nextHeight = Math.max(MIN_NATIVE_CANVAS_HEIGHT, Math.floor(height));
+    const maxPixels = isMobileLayout() ? MOBILE_NATIVE_PIXEL_LIMIT : DESKTOP_NATIVE_PIXEL_LIMIT;
+    const maxDimension = isMobileLayout() ? MOBILE_MAX_DIMENSION : DESKTOP_MAX_DIMENSION;
+
+    const pixelCount = nextWidth * nextHeight;
+    if (pixelCount > maxPixels) {
+        const scale = Math.sqrt(maxPixels / pixelCount);
+        nextWidth = Math.max(MIN_NATIVE_CANVAS_WIDTH, Math.floor(nextWidth * scale));
+        nextHeight = Math.max(MIN_NATIVE_CANVAS_HEIGHT, Math.floor(nextHeight * scale));
+    }
+
+    const dimensionScale = Math.min(maxDimension / nextWidth, maxDimension / nextHeight, 1);
+    if (dimensionScale < 1) {
+        nextWidth = Math.max(MIN_NATIVE_CANVAS_WIDTH, Math.floor(nextWidth * dimensionScale));
+        nextHeight = Math.max(MIN_NATIVE_CANVAS_HEIGHT, Math.floor(nextHeight * dimensionScale));
+    }
+
+    return [nextWidth, nextHeight];
+}
+
+function applyLayoutDefaults() {
+    const resolutionSelect = document.getElementById('resolution');
+    const aspectRatioSelect = document.getElementById('aspectRatio');
+    const controlsHint = document.getElementById('controls_hint');
+    if (!resolutionSelect || !aspectRatioSelect || !controlsHint) {
+        return;
+    }
+
+    if (isMobileLayout()) {
+        resolutionSelect.value = 'high';
+        aspectRatioSelect.value = 'any';
+        controlsHint.textContent = 'Canvas size is capped on mobile. Install to home screen for the cleanest layout.';
+        return;
+    }
+
+    controlsHint.textContent = 'Full screen: try F11 or Command+Shift+F.';
+}
+
+function nudgeMobileAspectRatioAfterRotation() {
+    if (!isMobileLayout()) {
+        return;
+    }
+
+    const aspectRatioSelect = document.getElementById('aspectRatio');
+    if (!aspectRatioSelect) {
+        return;
+    }
+
+    aspectRatioSelect.value = '4:3';
+    fixGeometry(true);
+    setTimeout(() => {
+        aspectRatioSelect.value = 'any';
+        fixGeometry(true);
+    }, 80);
+}
 
 function activateBody() {
     const extraCSS = document.createElement("style");
@@ -128,12 +621,57 @@ function activateBody() {
     const canvasContainer = document.getElementById('canvas_container');
     canvasContainer.appendChild(mtCanvas);
 
+    applyLayoutDefaults();
     setupResizeHandlers();
 
     consoleButton = document.getElementById('console_button');
     consoleOutput = document.getElementById('console_output');
+    visorToggleButton = document.getElementById('visor_toggle');
+    overlayVisorButton = document.getElementById('overlay_visor_button');
+    chatOverlay = document.getElementById('chat_overlay');
+    chatInput = document.getElementById('chat_input');
+    chatModeBtn = document.getElementById('chat_mode_btn');
+    joinCodeBanner = document.getElementById('join_code_banner');
+    joinCodeText = document.getElementById('join_code_text');
+    // Restore join code if already set before activateBody was called
+    if (joinCodeUrl && joinCodeBanner && joinCodeText) {
+        joinCodeText.textContent = joinCodeUrl;
+        joinCodeBanner.classList.add('visible');
+    }
+    if (chatInput) {
+        // Register on document in CAPTURE phase here, before Emscripten registers its own
+        // listeners in emloop_ready(). Because we registered first, stopImmediatePropagation
+        // blocks Emscripten's listeners while still allowing the browser's default action
+        // (e.g. backspace deleting a character in the input).
+        const blockForGame = (e) => {
+            if (document.activeElement === chatInput) {
+                e.stopImmediatePropagation();
+            }
+        };
+        document.addEventListener('keydown', blockForGame, true);
+        document.addEventListener('keyup', blockForGame, true);
+        document.addEventListener('keypress', blockForGame, true);
+
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
+            if (e.key === 'Escape') { e.preventDefault(); closeChatOverlay(); }
+            if (e.key === 'Backspace' && chatInput.value === '') {
+                // Input is empty — forward backspace to game
+                mtCanvas.dispatchEvent(new KeyboardEvent('keydown', {
+                    bubbles: false, cancelable: true,
+                    key: 'Backspace', code: 'Backspace', keyCode: 8, which: 8
+                }));
+                mtCanvas.dispatchEvent(new KeyboardEvent('keyup', {
+                    bubbles: false, cancelable: true,
+                    key: 'Backspace', code: 'Backspace', keyCode: 8, which: 8
+                }));
+            }
+        });
+    }
     // Triggers the first and all future updates
     consoleUpdate();
+
+    setVisorMode(false);
 
     progressBar = document.getElementById('progressbar');
     progressBarDiv = document.getElementById('progressbar_div');
@@ -286,6 +824,76 @@ var consoleText = [];
 var consoleLengthMax = 1000;
 var consoleTextLast = 0;
 var consoleDirty = false;
+
+const PERSIST_MOUNT = '/persist';
+const PERSIST_MT_DIR = PERSIST_MOUNT + '/.minetest';
+const PERSIST_WORLDS_DIR = PERSIST_MT_DIR + '/worlds';
+
+// Lists worlds stored in OPFS (the WasmFS backend mounted at /persist).
+// OPFS root "/" corresponds to WASM path "/persist/", so world dirs are at
+// OPFS ".minetest/worlds/<name>".
+async function listPersistedWorlds() {
+    try {
+        if (!navigator.storage || !navigator.storage.getDirectory) return [];
+        const root = await navigator.storage.getDirectory();
+        const mtDir = await root.getDirectoryHandle('.minetest', { create: false }).catch(() => null);
+        if (!mtDir) return [];
+        const worldsDir = await mtDir.getDirectoryHandle('worlds', { create: false }).catch(() => null);
+        if (!worldsDir) return [];
+        const worlds = [];
+        for await (const [name, handle] of worldsDir.entries()) {
+            if (handle.kind !== 'directory') continue;
+            let title = name;
+            let gameid = '';
+            try {
+                const wmFile = await handle.getFileHandle('world.mt', { create: false }).catch(() => null);
+                if (wmFile) {
+                    const file = await wmFile.getFile();
+                    const text = await file.text();
+                    text.split(/\r?\n/).forEach((line) => {
+                        const eq = line.indexOf('=');
+                        if (eq < 0) return;
+                        const k = line.slice(0, eq).trim();
+                        const v = line.slice(eq + 1).trim();
+                        if (k === 'world_name' && v) title = v;
+                        if (k === 'gameid' && v) gameid = v;
+                    });
+                }
+            } catch (_e) {}
+            worlds.push({ id: name, title, gameid, path: PERSIST_WORLDS_DIR + '/' + name });
+        }
+        worlds.sort((a, b) => a.title.localeCompare(b.title));
+        return worlds;
+    } catch (_e) {
+        return [];
+    }
+}
+
+// OPFS persists automatically — no explicit flush needed.
+// This function exists so the Save World button has something to call.
+function saveWorldNowOPFS() {
+    const btn = document.getElementById('save_world_btn');
+    if (btn) {
+        btn.value = '\u2713 Auto-saved';
+        setTimeout(() => { btn.value = 'Save World'; }, 1500);
+    }
+}
+
+window.listPersistedWorlds = listPersistedWorlds;
+window.flushPersistedWorlds = () => Promise.resolve();
+window.debugPersist = async function() {
+    console.log('[persist] OPFS-backed WasmFS build');
+    try {
+        const root = await navigator.storage.getDirectory();
+        const entries = [];
+        for await (const [name] of root.entries()) entries.push(name);
+        console.log('[persist] OPFS root entries:', entries);
+        const worlds = await listPersistedWorlds();
+        console.log('[persist] worlds found:', worlds);
+    } catch (e) { console.error('[persist] error:', e); }
+    return 'done';
+};
+
 function consoleUpdate() {
     if (consoleDirty) {
         if (consoleText.length > consoleLengthMax) {
@@ -381,24 +989,18 @@ function fixGeometry(override) {
     var screenX;
     var screenY;
 
-    // Prevent the controls from getting focus
-    canvas.focus();
-
-    var isFullScreen = document.fullscreenElement ? true : false;
-    if (isFullScreen) {
-        screenX = screen.width;
-        screenY = screen.height;
-    } else {
-        // F11-style full screen
-        var controls = document.getElementById('controls');
-        var maximized = !window.screenTop && !window.screenY;
-        controls.style = maximized ? 'display: none' : '';
-
-        var headerHeight = document.getElementById('header').offsetHeight;
-        var footerHeight = document.getElementById('footer').offsetHeight;
-        screenX = document.documentElement.clientWidth - 6;
-        screenY = document.documentElement.clientHeight - headerHeight - footerHeight - 6;
+    // Prevent the controls from getting focus, but don't steal it from the chat input
+    if (document.activeElement !== chatInput) {
+        canvas.focus();
     }
+
+    const viewport = getViewportSize();
+    const header = document.getElementById('header');
+    const footer = document.getElementById('footer');
+    const headerHeight = header ? header.offsetHeight : 0;
+    const footerHeight = footer ? footer.offsetHeight : 0;
+    screenX = Math.max(1, viewport.width - 24);
+    screenY = Math.max(1, viewport.height - headerHeight - footerHeight - 24);
 
     // Size of the viewport (after scaling)
     var realX;
@@ -420,36 +1022,33 @@ function fixGeometry(override) {
     }
 
     // Native canvas resolution
-    var resX;
-    var resY;
-    var scale = false;
-    if (resolution == 'high') {
-        resX = realX;
-        resY = realY;
-    } else if (resolution == 'medium') {
-        resX = Math.floor(realX / 1.5);
-        resY = Math.floor(realY / 1.5);
-        scale = true;
-    } else {
-        resX = Math.floor(realX / 2.0);
-        resY = Math.floor(realY / 2.0);
-        scale = true;
-    }
+    const resolutionScale = getResolutionScale(resolution);
+    var resX = Math.floor(realX * resolutionScale);
+    var resY = Math.floor(realY * resolutionScale);
+    [resX, resY] = clampNativeCanvasSize(resX, resY);
     resizeCanvas(resX, resY);
 
-    if (scale) {
-        var styleWidth = realX + "px";
-        var styleHeight = realY + "px";
-        canvas.style.setProperty("width", styleWidth, "important");
-        canvas.style.setProperty("height", styleHeight, "important");
-    } else {
-        canvas.style.removeProperty("width");
-        canvas.style.removeProperty("height");
-    }
+    var styleWidth = realX + "px";
+    var styleHeight = realY + "px";
+    canvas.style.setProperty("width", styleWidth, "important");
+    canvas.style.setProperty("height", styleHeight, "important");
 }
 
 function setupResizeHandlers() {
     window.addEventListener('resize', () => { fixGeometry(); });
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            nudgeMobileAspectRatioAfterRotation();
+            fixGeometry(true);
+        }, 150);
+    });
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            // Ignore viewport resize (keyboard open/close) while chat input is focused
+            if (document.activeElement === chatInput) return;
+            fixGeometry(true);
+        });
+    }
 
     // Needed to prevent special keys from triggering browser actions, like
     // F5 causing page reload.
@@ -561,7 +1160,7 @@ class MinetestLauncher {
         this.vpn = null;
         this.serverCode = null;
         this.clientCode = null;
-        this.proxyUrl = "wss://minetest.dustlabs.io/proxy";
+        this.proxyUrl = "wss://bc3d.etherdeck.org/proxy";
         this.packsDir = DEFAULT_PACKS_DIR;
         this.packsDirIsCors = false;
         this.minetestConf = new Map();

@@ -47,6 +47,15 @@ apply_substitutions() {
 pushd "$BASE_DIR/static"
 apply_substitutions htaccess_toplevel   "$WWW_DIR"/.htaccess
 apply_substitutions index.html  "$WWW_DIR"/index.html
+apply_substitutions app.webmanifest "$WWW_DIR"/app.webmanifest
+apply_substitutions service-worker.js "$WWW_DIR"/service-worker.js
+cp icon.svg "$WWW_DIR"/icon.svg
+cp icon-maskable.svg "$WWW_DIR"/icon-maskable.svg
+cp apple-touch-icon.png "$WWW_DIR"/apple-touch-icon.png
+cp icon-192.png "$WWW_DIR"/icon-192.png
+cp icon-512.png "$WWW_DIR"/icon-512.png
+python3 -m pip install pyyaml -q 2>/dev/null || true
+python3 -c "import yaml,json; data=yaml.safe_load(open('servers.yml')); json.dump(data, open('$WWW_DIR/servers.json','w'), indent=2)"
 apply_substitutions htaccess_release "$RELEASE_DIR"/.htaccess
 apply_substitutions launcher.js "$RELEASE_DIR"/launcher.js
 apply_substitutions worker.js "$RELEASE_DIR"/worker.js
