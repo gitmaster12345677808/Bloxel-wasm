@@ -27,7 +27,7 @@ class IsolatedRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self) -> None:
         # SharedArrayBuffer requires cross-origin isolation.
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
-        self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
+        self.send_header("Cross-Origin-Embedder-Policy", "credentialless")
         self.send_header("Cross-Origin-Resource-Policy", "same-origin")
 
         path = self.path.split("?", 1)[0]

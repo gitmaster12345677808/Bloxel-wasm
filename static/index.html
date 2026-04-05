@@ -205,6 +205,158 @@
                 border-style: dashed;
             }
 
+            /* ===== Tabs ===== */
+            .tab-bar {
+                display: flex;
+                gap: 4px;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid var(--surface-border);
+                border-radius: 16px;
+                padding: 5px;
+            }
+
+            .tab-btn {
+                flex: 1;
+                min-height: 42px;
+                border: none;
+                border-radius: 12px;
+                background: transparent;
+                color: var(--muted);
+                font-size: 0.92rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: background 0.15s, color 0.15s;
+                padding: 0 10px;
+            }
+
+            .tab-btn:hover {
+                background: rgba(139, 92, 246, 0.12);
+                color: var(--text);
+            }
+
+            .tab-btn.active {
+                background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+                color: #f0eafa;
+                box-shadow: 0 2px 10px rgba(124, 58, 237, 0.35);
+            }
+
+            .tab-panel {
+                display: none;
+            }
+
+            .tab-panel.active {
+                display: grid;
+                gap: 16px;
+            }
+            /* ================ */
+
+            /* ===== Game Settings ===== */
+            .settings-group {
+                display: grid;
+                gap: 14px;
+            }
+
+            .settings-group-title {
+                font-size: 0.78rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                color: var(--accent);
+                margin: 0 0 2px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid rgba(139,92,246,0.18);
+            }
+
+            .setting-row {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                justify-content: space-between;
+            }
+
+            .setting-label-wrap {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+
+            .setting-label {
+                font-size: 0.88rem;
+                font-weight: 700;
+                color: var(--text);
+                display: block;
+            }
+
+            .setting-desc {
+                font-size: 0.76rem;
+                color: var(--muted);
+                margin-top: 2px;
+                line-height: 1.4;
+            }
+
+            .setting-control {
+                flex: 0 0 auto;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .setting-control input[type="range"] {
+                width: 110px;
+                accent-color: var(--accent);
+            }
+
+            .setting-control input[type="number"],
+            .setting-control input[type="text"] {
+                width: 90px;
+                min-height: 34px;
+                border-radius: 8px;
+                border: 1px solid rgba(139,92,246,0.3);
+                background: var(--surface-strong);
+                color: var(--text);
+                padding: 0 8px;
+                font-size: 0.85rem;
+            }
+
+            .setting-control select {
+                min-height: 34px;
+                border-radius: 8px;
+                border: 1px solid rgba(139,92,246,0.3);
+                background: var(--surface-strong);
+                color: var(--text);
+                padding: 0 8px;
+                font-size: 0.85rem;
+                appearance: none;
+            }
+
+            .setting-control input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+                accent-color: var(--accent);
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            .setting-range-val {
+                font-size: 0.8rem;
+                color: var(--muted);
+                min-width: 36px;
+                text-align: right;
+            }
+
+            .settings-reset-btn {
+                width: auto !important;
+                min-height: 36px !important;
+                padding: 0 16px !important;
+                font-size: 0.85rem !important;
+                border-radius: 10px !important;
+                flex: none !important;
+                background: var(--surface) !important;
+                border-color: rgba(139,92,246,0.3) !important;
+                color: var(--muted) !important;
+                font-weight: 600 !important;
+            }
+            /* ========================= */
+
             #temporary_console {
                 white-space: pre-wrap;
             }
@@ -219,6 +371,73 @@
             [hidden] {
                 display: none !important;
             }
+
+            /* ===== Loading Screen ===== */
+            #loading_screen {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                background: #000;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                transition: opacity 0.5s ease;
+            }
+
+            #loading_screen.fade-out {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .loading-logo {
+                width: 130px;
+                height: 130px;
+                margin-bottom: 14px;
+                filter: drop-shadow(0 0 28px rgba(139, 92, 246, 0.55));
+            }
+
+            .loading-game-title {
+                font-size: 2.6rem;
+                font-weight: 800;
+                color: #f0eafa;
+                letter-spacing: 0.08em;
+                margin-bottom: 44px;
+                text-shadow: 0 0 32px rgba(139, 92, 246, 0.6);
+            }
+
+            .loading-bar-wrap {
+                width: min(440px, 76vw);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 14px;
+            }
+
+            .loading-bar-track {
+                width: 100%;
+                height: 7px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+                overflow: hidden;
+            }
+
+            .loading-bar-fill {
+                height: 100%;
+                width: 0%;
+                min-width: 3%;
+                background: linear-gradient(90deg, #7c3aed, #a78bfa);
+                border-radius: 4px;
+                transition: width 0.3s ease;
+            }
+
+            .loading-status-text {
+                font-size: 0.75rem;
+                color: rgba(255, 255, 255, 0.32);
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+            /* ========================= */
 
             @media (max-width: 700px) {
                 body {
@@ -415,6 +634,18 @@
         </style>
   </head>
     <body>
+        <!-- Loading Screen -->
+        <div id="loading_screen">
+            <img class="loading-logo" src="icon.svg" alt="Bloxel">
+            <div class="loading-game-title">Bloxel</div>
+            <div class="loading-bar-wrap">
+                <div class="loading-bar-track">
+                    <div id="loading_bar_fill" class="loading-bar-fill"></div>
+                </div>
+                <div id="loading_status_text" class="loading-status-text">Initializing&hellip;</div>
+            </div>
+        </div>
+
         <main class="landing-shell">
             <section class="hero">
                 <div class="hero-head">
@@ -459,112 +690,145 @@
             </section>
 
             <div class="stack">
-                <div id="temporary_console" class="panel"></div>
+                <div id="temporary_console" class="panel" hidden></div>
 
-                <section id="launch_form" class="panel section" style="display: none;">
-                    <div>
-                        <span class="section-title">Launcher</span>
-                        <p class="section-copy">Pick a proxy and language before starting the game or hosting a browser-based server.</p>
-                    </div>
+                <!-- Tab bar (hidden until launcher is ready) -->
+                <div id="tab_bar" class="tab-bar" style="display: none;">
+                    <button class="tab-btn active" onclick="switchTab('singleplayer')">Singleplayer</button>
+                    <button class="tab-btn" onclick="switchTab('multiplayer')">Multiplayer</button>
+                    <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+                </div>
 
-                    <div class="fields">
-                        <div class="field">
-                            <label for="select_proxy">Network Proxy</label>
-                            <select id="select_proxy">
-                                <!-- filled by javascript -->
-                            </select>
+                <!-- Singleplayer tab -->
+                <div id="tab_singleplayer" class="tab-panel active" style="display: none;">
+                    <section id="launch_form" class="panel section">
+                        <div>
+                            <span class="section-title">Play</span>
+                            <p class="section-copy">Start a local world in your browser. After launching you can share the join link so friends can connect.</p>
                         </div>
 
-                        <div class="field">
-                            <label for="select_language">Language</label>
-                            <select id="select_language">
-                                <!-- filled by javascript -->
-                            </select>
-                        </div>
-                    </div>
+                        <div class="fields">
+                            <div class="field">
+                                <label for="multiplayer_username">Player Name</label>
+                                <input type="text" id="multiplayer_username" required="" pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false">
+                            </div>
 
-                    <div>
-                        <span class="section-title">Run Server In Browser</span>
-                        <p class="section-copy">After launch, copy the URL and open it on client devices. Closing this page shuts down the hosted server.</p>
-                    </div>
-
-                    <div class="fields">
-                        <div class="field">
-                            <label for="multiplayer_username">Player Name</label>
-                            <input type="text" id="multiplayer_username" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false">
+                            <div class="field">
+                                <label for="multiplayer_game">Game</label>
+                                <select id="multiplayer_game">
+                                    <option value="minetest_game">minetest_game</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div class="field">
-                            <label for="multiplayer_game">Game</label>
-                            <select id="multiplayer_game">
-                                <option value="minetest_game">minetest_game</option>
-                            </select>
+                        <div class="actions">
+                            <button id="launch_server" type="button">Launch Game</button>
                         </div>
-                    </div>
+                    </section>
+                </div>
 
-                    <p class="field-note">Mobile launch is supported, but active play still depends on browser input support and available peripherals.</p>
-
-                    <div class="actions">
-                        <button id="launch_server" type="button">Launch Server</button>
-                    </div>
-                </section>
-
-                <section id="server_list_form" class="panel section" style="display: none;">
-                    <div>
-                        <span class="section-title">Servers</span>
-                        <p class="section-copy">Enter your player name then click Join to connect to a server.</p>
-                    </div>
-                    <div class="field">
-                        <label for="player_name">Player Name</label>
-                        <input type="text" id="player_name" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Enter your name...">
-                    </div>
-                    <div id="server_cards" class="server-grid">
-                        <p style="color:var(--muted)">Loading servers…</p>
-                    </div>
-                </section>
-
-                <section id="join_code_form" class="panel section" style="display: none;">
-                    <div>
-                        <span class="section-title">Join a Friend</span>
-                        <p class="section-copy">Paste the join link or code your friend shared with you, then click Join.</p>
-                    </div>
-
-                    <div class="fields">
-                        <div class="field">
-                            <label for="join_code_input">Join Code or Link</label>
-                            <input type="text" id="join_code_input" placeholder="Paste code or link here..." autocapitalize="off" autocomplete="off" spellcheck="false">
+                <!-- Multiplayer tab -->
+                <div id="tab_multiplayer" class="tab-panel" style="display: none;">
+                    <section id="server_list_form" class="panel section">
+                        <div>
+                            <span class="section-title">Servers</span>
+                            <p class="section-copy">Enter your player name then click Join to connect to a server.</p>
                         </div>
-                    </div>
-
-                    <div class="actions">
-                        <button id="join_code_launch" type="button">Join Game</button>
-                    </div>
-                </section>
-
-                <section id="join_form" class="panel section" style="display: none;">
-                    <div>
-                        <span class="section-title">Join Game</span>
-                        <p class="section-copy">Enter a player name to join the browser-hosted session linked from this URL.</p>
-                    </div>
-
-                    <div class="fields">
                         <div class="field">
-                            <label for="join_username">Player Name</label>
-                            <input type="text" id="join_username" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false">
+                            <label for="player_name">Player Name</label>
+                            <input type="text" id="player_name" required="" pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Enter your name...">
                         </div>
-                    </div>
+                        <div id="server_cards" class="server-grid">
+                            <p style="color:var(--muted)">Loading servers&hellip;</p>
+                        </div>
+                    </section>
 
-                    <div class="actions">
-                        <button id="join_launch" type="button">Join Game</button>
-                    </div>
-                </section>
+                    <section id="join_code_form" class="panel section">
+                        <div>
+                            <span class="section-title">Join a Friend</span>
+                            <p class="section-copy">Paste the join link or code your friend shared with you, then click Join.</p>
+                        </div>
 
-                <section class="panel compat-note">
-                    <div>
-                        <span class="section-title">Compatibility Notes</span>
-                        <p>Canvas sizing is now capped for mobile browsers so the render target stays within sane bounds. This build is installable on Android and can be added to the home screen on iOS. VR and WebXR are not implemented in this port yet, so headset mode is still unavailable.</p>
-                    </div>
-                </section>
+                        <div class="fields">
+                            <div class="field">
+                                <label for="join_code_input">Join Code or Link</label>
+                                <input type="text" id="join_code_input" placeholder="Paste code or link here..." autocapitalize="off" autocomplete="off" spellcheck="false">
+                            </div>
+                        </div>
+
+                        <div class="actions">
+                            <button id="join_code_launch" type="button">Join Game</button>
+                        </div>
+                    </section>
+
+                    <section id="join_form" class="panel section" style="display: none;">
+                        <div>
+                            <span class="section-title">Join Game</span>
+                            <p class="section-copy">Enter a player name to join the browser-hosted session linked from this URL.</p>
+                        </div>
+
+                        <div class="fields">
+                            <div class="field">
+                                <label for="join_username">Player Name</label>
+                                <input type="text" id="join_username" required="" pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false">
+                            </div>
+                        </div>
+
+                        <div class="actions">
+                            <button id="join_launch" type="button">Join Game</button>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Settings tab -->
+                <div id="tab_settings" class="tab-panel" style="display: none;">
+                    <section class="panel section">
+                        <div>
+                            <span class="section-title">Network &amp; Language</span>
+                            <p class="section-copy">Choose the proxy region closest to you for the best connection, and set your preferred language.</p>
+                        </div>
+                        <div class="fields">
+                            <div class="field">
+                                <label for="select_proxy">Network Proxy</label>
+                                <select id="select_proxy">
+                                    <!-- filled by javascript -->
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="select_language">Language</label>
+                                <select id="select_language">
+                                    <!-- filled by javascript -->
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- VR / Meta Quest section -->
+                    <section class="panel section" id="vr_info_panel">
+                        <div>
+                            <span class="section-title">VR Mode — Meta Quest</span>
+                            <p class="section-copy">WebXR immersive-VR is supported in Meta Quest Browser 21+. After the game loads, tap <strong>VR Mode</strong> in the top bar to enter your headset. Head rotation maps to camera look and Quest controllers drive all movement and interactions.</p>
+                        </div>
+                        <div class="panel compat-note" style="margin-top:0;">
+                            <p style="margin:0;font-size:0.85rem;color:var(--muted)">
+                                <strong>Controller mapping:</strong><br>
+                                Left stick&nbsp;→ Move &nbsp;|&nbsp; Right trigger&nbsp;→ Dig &nbsp;|&nbsp; Right grip&nbsp;→ Place<br>
+                                Left trigger&nbsp;→ Jump &nbsp;|&nbsp; Left grip&nbsp;→ Sneak &nbsp;|&nbsp; X&nbsp;→ Inventory &nbsp;|&nbsp; Y&nbsp;→ Menu<br>
+                                A&nbsp;→ Drop &nbsp;|&nbsp; B&nbsp;→ Chat &nbsp;|&nbsp; Right stick X&nbsp;→ Hotbar scroll
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Game settings panels built by JS -->
+                    <div id="game_settings_container"></div>
+
+                    <section class="panel compat-note">
+                        <div>
+                            <span class="section-title">Compatibility Notes</span>
+                            <p>Canvas sizing is capped for mobile browsers to keep the render target within sane bounds. This build is installable on Android and can be added to the home screen on iOS. WebXR VR is now supported for Meta Quest Browser — head tracking controls your camera, and both Quest controllers are fully mapped.</p>
+                        </div>
+                    </section>
+                </div>
             </div>
         </main>
     <script type="text/javascript" src="%__RELEASE_UUID__%/launcher.js"></script>
@@ -642,7 +906,9 @@
       }
 
       function isTouchDevice() {
-          return window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+          // Use only pointer: coarse so that Windows laptops with a touchscreen
+          // but a mouse as primary pointer are correctly treated as desktop.
+          return window.matchMedia('(pointer: coarse)').matches;
       }
 
       function enableTouchDefaults(mtl) {
@@ -656,8 +922,16 @@
           mtl.setConf('virtual_joystick_triggers_aux1', 'false');
       }
 
-      const launchForm = document.getElementById('launch_form');
-      const joinForm = document.getElementById('join_form');
+      function enableDesktopDefaults(mtl) {
+          if (isTouchDevice()) return;
+          mtl.setConf('hud_scaling', '1.7');
+      }
+
+      function applyDeviceDefaults(mtl) {
+          enableTouchDefaults(mtl);
+          enableDesktopDefaults(mtl);
+      }
+
       const tcon = document.getElementById('temporary_console');
       function tcon_print(prefix, line) {
           if (prefix) {
@@ -674,22 +948,131 @@
       }
 
       function wipePage() {
-          launchForm.remove();
-          joinForm.remove();
-          const joinCodeForm = document.getElementById('join_code_form');
-          if (joinCodeForm) joinCodeForm.remove();
-          const serverListForm = document.getElementById('server_list_form');
-          if (serverListForm) serverListForm.remove();
+          // Remove entire tab structure
+          const tabBar = document.getElementById('tab_bar');
+          if (tabBar) tabBar.remove();
+          ['tab_singleplayer','tab_multiplayer','tab_settings'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.remove();
+          });
           tcon.remove();
       }
 
+      // ===== Jitsi Voice Chat =====
+      const JITSI_HOST  = 'servers.etherdeck.org:5384';
+      const JITSI_ROOM  = 'FurrianEmpire';
+
+      function joinVoiceChat(displayName) {
+          // If panel already exists just show it.
+          if (document.getElementById('voice_panel')) {
+              document.getElementById('voice_panel').style.display = 'flex';
+              return;
+          }
+
+          const panel = document.createElement('div');
+          panel.id = 'voice_panel';
+
+          // Build URL with Jitsi hash-param dot-notation config.
+          const dn  = encodeURIComponent(displayName || 'Player');
+          const src = 'https://' + JITSI_HOST + '/' + JITSI_ROOM
+              + '#userInfo.displayName=' + dn
+              + '&config.prejoinPageEnabled=false'
+              + '&config.startWithVideoMuted=true'
+              + '&config.startWithAudioMuted=false'
+              + '&config.disableDeepLinking=true'
+              + '&interfaceConfig.SHOW_JITSI_WATERMARK=false';
+
+          panel.innerHTML = `
+              <div id="voice_titlebar">
+                  <span id="voice_title">&#x1F3A4; Voice Chat &#x2014; ${JITSI_ROOM}</span>
+                  <button class="vc-btn" onclick="document.getElementById('voice_panel').classList.toggle('vc-collapsed')" title="Minimise">&#x2014;</button>
+                  <button class="vc-btn danger" onclick="leaveVoiceChat()" title="Leave voice chat">&#x2715; Leave</button>
+              </div>
+              <iframe id="voice_iframe"
+                  src="${src}"
+                  allow="microphone; camera; display-capture"
+                  allowfullscreen
+              ></iframe>
+          `;
+
+          document.body.appendChild(panel);
+          makeDraggable(panel, document.getElementById('voice_titlebar'));
+      }
+
+      function leaveVoiceChat() {
+          const panel = document.getElementById('voice_panel');
+          if (panel) panel.remove();
+      }
+
+      function makeDraggable(el, handle) {
+          let startX, startY, startL, startT;
+          handle.addEventListener('mousedown', e => {
+              // Switch from bottom/right anchors to top/left so dragging works.
+              const rect = el.getBoundingClientRect();
+              el.style.bottom = 'auto'; el.style.right = 'auto';
+              el.style.left   = rect.left + 'px';
+              el.style.top    = rect.top  + 'px';
+              startX = e.clientX; startY = e.clientY;
+              startL = rect.left; startT = rect.top;
+              const onMove = mv => {
+                  el.style.left = Math.max(0, startL + mv.clientX - startX) + 'px';
+                  el.style.top  = Math.max(0, startT + mv.clientY - startY) + 'px';
+              };
+              const onUp = () => {
+                  window.removeEventListener('mousemove', onMove);
+                  window.removeEventListener('mouseup', onUp);
+              };
+              window.addEventListener('mousemove', onMove);
+              window.addEventListener('mouseup', onUp);
+              e.preventDefault();
+          });
+          // Touch drag support
+          handle.addEventListener('touchstart', e => {
+              const rect = el.getBoundingClientRect();
+              el.style.bottom = 'auto'; el.style.right = 'auto';
+              el.style.left   = rect.left + 'px';
+              el.style.top    = rect.top  + 'px';
+              const t0 = e.touches[0];
+              startX = t0.clientX; startY = t0.clientY;
+              startL = rect.left;  startT = rect.top;
+              const onMove = mv => {
+                  const t = mv.touches[0];
+                  el.style.left = Math.max(0, startL + t.clientX - startX) + 'px';
+                  el.style.top  = Math.max(0, startT + t.clientY - startY) + 'px';
+              };
+              const onEnd = () => {
+                  handle.removeEventListener('touchmove', onMove);
+                  handle.removeEventListener('touchend',  onEnd);
+              };
+              handle.addEventListener('touchmove', onMove, { passive: false });
+              handle.addEventListener('touchend',  onEnd);
+              e.preventDefault();
+          }, { passive: false });
+      }
+      // ============================
+
+      function switchTab(name) {
+          ['singleplayer','multiplayer','settings'].forEach(t => {
+              const panel = document.getElementById('tab_' + t);
+              const btn = document.querySelector(`.tab-btn[onclick="switchTab('${t}')"]`);
+              if (panel) {
+                  panel.classList.toggle('active', t === name);
+                  panel.style.display = (t === name) ? '' : 'none';
+              }
+              if (btn) btn.classList.toggle('active', t === name);
+          });
+      }
+
       function enableLaunchForm() {
+          const tabBar = document.getElementById('tab_bar');
+          if (tabBar) tabBar.style.display = '';
+
           if (join_code) {
-              joinForm.style.display = 'block';
+              // Joining via URL — show multiplayer tab with the join panel visible
+              document.getElementById('join_form').style.display = 'block';
+              switchTab('multiplayer');
           } else {
-              launchForm.style.display = 'block';
-              document.getElementById('join_code_form').style.display = 'block';
-              document.getElementById('server_list_form').style.display = 'block';
+              switchTab('singleplayer');
           }
 
           const select_proxy = document.getElementById('select_proxy');
@@ -724,7 +1107,8 @@
               const proxy = proxies[proxyIndex][0];
               wipePage();
               mtl.setProxy(proxy);
-              enableTouchDefaults(mtl);
+              applyUserSettings(mtl);
+              applyDeviceDefaults(mtl);
               mtl.setLang(select_language.value);
               const joinArgs = new MinetestArgs();
               joinArgs.name = username;
@@ -837,8 +1221,6 @@
               wipePage();
 
               const proxy = proxies[proxyIndex][0];
-              mtl.setProxy(proxy);
-              mtl.addPack(game);
               const [cmd, serverCode, clientCode] = await queryProxy(`MAKEVPN ${game}`, proxy);
               if (cmd != 'NEWVPN') {
                   alert("Invalid response from proxy");
@@ -855,7 +1237,8 @@
               history.pushState({}, "", `?proxy=${proxyIndex}&game=${game}&join=${clientCode}`);
               mtl.setVPN(serverCode, clientCode);
               enableMemorySaving(mtl);
-              enableTouchDefaults(mtl);
+              applyUserSettings(mtl);
+              applyDeviceDefaults(mtl);
               mtl.setLang(select_language.value);
               mtl.launch(args);
               // Show join link on the visor after launch
@@ -883,7 +1266,8 @@
               args.go = true;
               mtl.setVPN(null, join_code);
               enableMemorySaving(mtl);
-              enableTouchDefaults(mtl);
+              applyUserSettings(mtl);
+              applyDeviceDefaults(mtl);
               mtl.setLang(select_language.value);
               mtl.launch(args);
           });
@@ -915,7 +1299,8 @@
               args.go = true;
               mtl.setVPN(null, parsed.code);
               enableMemorySaving(mtl);
-              enableTouchDefaults(mtl);
+              applyUserSettings(mtl);
+              applyDeviceDefaults(mtl);
               mtl.setLang(select_language.value);
               mtl.launch(args);
           });
@@ -1172,20 +1557,343 @@
       mtl.onprint = (text) => {
           tcon_print("", text);
       };
+      const _loadingProgress = {};
+      let _launcherReady = false;
+      let _loadingDone = false;
+
+      function tryCompleteLoadingScreen() {
+          if (_loadingDone || !_launcherReady) return;
+          const vals = Object.values(_loadingProgress);
+          if (vals.length === 0) return;
+          if (!vals.every(v => v >= 1.0)) return;
+          _loadingDone = true;
+          const fill = document.getElementById('loading_bar_fill');
+          if (fill) fill.style.width = '100%';
+          const statusEl = document.getElementById('loading_status_text');
+          if (statusEl) statusEl.textContent = 'Ready';
+          const ls = document.getElementById('loading_screen');
+          if (ls) {
+              ls.classList.add('fade-out');
+              setTimeout(() => { if (ls.parentNode) ls.parentNode.removeChild(ls); }, 520);
+          }
+          enableLaunchForm();
+      }
+
       mtl.onprogress = (name, progress) => {
-          const prefix = `Task ${name} : `;
-          const pct = `${Math.round(progress * 100)}%`;
-          tcon_print(prefix, pct);
+          _loadingProgress[name] = progress;
+          const vals = Object.values(_loadingProgress);
+          const overall = vals.reduce((a, b) => a + b, 0) / vals.length;
+          const pct = Math.min(99, Math.round(overall * 100));
+          const fill = document.getElementById('loading_bar_fill');
+          if (fill) fill.style.width = pct + '%';
+          const statusEl = document.getElementById('loading_status_text');
+          if (statusEl) statusEl.textContent = pct + '% — Loading assets\u2026';
+          tryCompleteLoadingScreen();
       };
       mtl.onready = () => {
-          tcon_print("", "READY!");
-          enableLaunchForm();
+          _launcherReady = true;
+          tryCompleteLoadingScreen();
       };
       mtl.onerror = (err) => {
           tcon_print("", "**************** FATAL ERROR ******************");
           tcon_print("", err);
           tcon_print("", "***********************************************");
       };
+
+      // ===== Game Settings Engine =====
+      const SETTINGS_STORAGE_KEY = 'bloxel_game_settings';
+
+      // Curated settings definition parsed from minetest.conf.example
+      // Each entry: { key, label, desc, type, default, min?, max?, values? }
+      // type: 'bool' | 'float' | 'int' | 'enum' | 'string' | 'key'
+      const GAME_SETTINGS_GROUPS = [
+        {
+          title: 'Controls — General',
+          settings: [
+            { key: 'camera_smoothing', label: 'Camera Smoothing', desc: 'Smooths rotation of camera (mouse smoothing). 0 to disable.', type: 'float', default: '0.0', min: 0, max: 0.99 },
+            { key: 'cinematic_camera_smoothing', label: 'Cinematic Camera Smoothing', desc: 'Smooths rotation of camera in cinematic mode. 0 to disable.', type: 'float', default: '0.7', min: 0, max: 0.99 },
+            { key: 'enable_build_where_you_stand', label: 'Build Where You Stand', desc: 'Place nodes at feet+eye level where you stand.', type: 'bool', default: 'false' },
+            { key: 'aux1_descends', label: 'Aux1 Descends', desc: 'Use Aux1 key instead of Sneak for climbing down and descending.', type: 'bool', default: 'false' },
+            { key: 'doubletap_jump', label: 'Double-tap Jump to Fly', desc: 'Double-tapping the jump key toggles fly mode.', type: 'bool', default: 'false' },
+            { key: 'always_fly_fast', label: 'Always Fly Fast', desc: 'If disabled, Aux1 is used to fly fast when both fly and fast mode are enabled.', type: 'bool', default: 'true' },
+            { key: 'toggle_sneak_key', label: 'Toggle Sneak Key', desc: 'Sneak key will toggle when pressed (ignored when fly is enabled).', type: 'bool', default: 'false' },
+            { key: 'toggle_aux1_key', label: 'Toggle Aux1 Key', desc: 'Aux1 key will toggle when pressed.', type: 'bool', default: 'false' },
+            { key: 'repeat_place_time', label: 'Repeat Place Time (s)', desc: 'Time between repeated node placements when holding place button.', type: 'float', default: '0.25', min: 0.16, max: 2 },
+            { key: 'repeat_dig_time', label: 'Repeat Dig Time (s)', desc: 'Minimum time between digging nodes when holding dig button.', type: 'float', default: '0.0', min: 0, max: 2 },
+            { key: 'autojump', label: 'Auto Jump', desc: 'Automatically jump up single-node obstacles.', type: 'bool', default: 'false' },
+            { key: 'safe_dig_and_place', label: 'Safe Dig and Place', desc: 'Prevent digging and placing from repeating when holding buttons.', type: 'bool', default: 'false' },
+          ]
+        },
+        {
+          title: 'Controls — Mouse',
+          settings: [
+            { key: 'invert_mouse', label: 'Invert Mouse', desc: 'Invert vertical mouse movement.', type: 'bool', default: 'false' },
+            { key: 'mouse_sensitivity', label: 'Mouse Sensitivity', desc: 'Mouse sensitivity multiplier.', type: 'float', default: '0.2', min: 0.001, max: 10 },
+            { key: 'enable_hotbar_mouse_wheel', label: 'Hotbar Mouse Wheel', desc: 'Use mouse wheel to select hotbar items.', type: 'bool', default: 'true' },
+            { key: 'invert_hotbar_mouse_wheel', label: 'Invert Hotbar Wheel', desc: 'Invert mouse wheel direction for hotbar selection.', type: 'bool', default: 'false' },
+          ]
+        },
+        {
+          title: 'Graphics — Performance',
+          settings: [
+            { key: 'fps_max', label: 'Max FPS', desc: 'Maximum frames per second (CPU sleep to limit).', type: 'int', default: '60', min: 1, max: 240 },
+            { key: 'vsync', label: 'VSync', desc: 'Vertical screen synchronization.', type: 'bool', default: 'false' },
+            { key: 'fps_max_unfocused', label: 'Max FPS (unfocused)', desc: 'Max FPS when window is not focused.', type: 'int', default: '10', min: 1, max: 120 },
+            { key: 'viewing_range', label: 'View Distance (nodes)', desc: 'View distance in nodes.', type: 'int', default: '190', min: 20, max: 4000 },
+            { key: 'undersampling', label: 'Undersampling', desc: 'Reduce render resolution for performance. 1 = off, higher = less detail.', type: 'int', default: '1', min: 1, max: 8 },
+            { key: 'occlusion_culler', label: 'Occlusion Culling', desc: 'Algorithm for occlusion culling. bfs is the newer faster method.', type: 'enum', default: 'bfs', values: ['bfs','loops'] },
+            { key: 'enable_raytraced_culling', label: 'Raytraced Culling', desc: 'Use raytraced occlusion culling for small mesh blocks.', type: 'bool', default: 'true' },
+            { key: 'performance_tradeoffs', label: 'Performance Tradeoffs', desc: 'Reduce CPU load at expense of minor visual glitches.', type: 'bool', default: 'false' },
+          ]
+        },
+        {
+          title: 'Graphics — Camera & Display',
+          settings: [
+            { key: 'fov', label: 'Field of View', desc: 'Field of view in degrees.', type: 'int', default: '72', min: 45, max: 160 },
+            { key: 'view_bobbing_amount', label: 'View Bobbing', desc: 'Amount of view bobbing. 0 = none, 1.0 = normal.', type: 'float', default: '1.0', min: 0, max: 7.9 },
+            { key: 'arm_inertia', label: 'Arm Inertia', desc: 'Gives a more realistic arm movement when camera moves.', type: 'bool', default: 'true' },
+            { key: 'display_gamma', label: 'Display Gamma', desc: 'Gamma correction for lighting. 1.0 = no change, higher = brighter midtones.', type: 'float', default: '1.0', min: 0.33, max: 3 },
+            { key: 'ambient_occlusion_gamma', label: 'AO Gamma', desc: 'Strength of ambient occlusion shading. Lower = darker.', type: 'float', default: '1.8', min: 0.25, max: 4 },
+          ]
+        },
+        {
+          title: 'Graphics — Effects',
+          settings: [
+            { key: 'smooth_lighting', label: 'Smooth Lighting', desc: 'Enable smooth lighting with ambient occlusion.', type: 'bool', default: 'true' },
+            { key: 'translucent_liquids', label: 'Translucent Liquids', desc: 'Allow liquids to appear translucent.', type: 'bool', default: 'true' },
+            { key: 'leaves_style', label: 'Leaves Style', desc: 'How leaves are rendered.', type: 'enum', default: 'fancy', values: ['fancy','simple','opaque'] },
+            { key: 'connected_glass', label: 'Connected Glass', desc: 'Connect glass if supported by the node.', type: 'bool', default: 'false' },
+            { key: 'enable_fog', label: 'Enable Fog', desc: 'Fade out the end of the visible area with fog.', type: 'bool', default: 'true' },
+            { key: 'directional_colored_fog', label: 'Directional Colored Fog', desc: 'Fog and sky colors depend on daytime and view direction.', type: 'bool', default: 'true' },
+            { key: 'fog_start', label: 'Fog Start', desc: 'Fraction of view distance at which fog starts.', type: 'float', default: '0.4', min: 0, max: 0.99 },
+            { key: 'enable_3d_clouds', label: '3D Clouds', desc: 'Allow clouds to look 3D instead of flat.', type: 'bool', default: 'true' },
+            { key: 'soft_clouds', label: 'Soft Clouds', desc: 'Use smooth cloud shading.', type: 'bool', default: 'false' },
+            { key: 'enable_waving_leaves', label: 'Waving Leaves', desc: 'Enable waving leaves animation.', type: 'bool', default: 'false' },
+            { key: 'enable_waving_plants', label: 'Waving Plants', desc: 'Enable waving plants animation.', type: 'bool', default: 'false' },
+            { key: 'enable_waving_water', label: 'Waving Water', desc: 'Enable waving liquid animation.', type: 'bool', default: 'false' },
+            { key: 'water_wave_height', label: 'Water Wave Height', desc: 'Maximum height of waving liquid surface. 0 = no movement.', type: 'float', default: '1.0', min: 0, max: 4 },
+          ]
+        },
+        {
+          title: 'Graphics — Filtering & AA',
+          settings: [
+            { key: 'antialiasing', label: 'Anti-aliasing', desc: 'Anti-aliasing method.', type: 'enum', default: 'none', values: ['none','fsaa','fxaa','ssaa'] },
+            { key: 'bilinear_filter', label: 'Bilinear Filter', desc: 'Use bilinear filtering when scaling textures.', type: 'bool', default: 'false' },
+            { key: 'trilinear_filter', label: 'Trilinear Filter', desc: 'Use trilinear filtering (overrides bilinear if both enabled).', type: 'bool', default: 'false' },
+            { key: 'mip_map', label: 'Mipmaps', desc: 'Use mipmaps when scaling textures. May improve performance.', type: 'bool', default: 'false' },
+            { key: 'anisotropic_filter', label: 'Anisotropic Filter', desc: 'Use anisotropic filtering. Best combined with mipmaps.', type: 'bool', default: 'false' },
+          ]
+        },
+        {
+          title: 'Graphics — Shadows',
+          settings: [
+            { key: 'shadow_strength_gamma', label: 'Shadow Strength', desc: 'Shadow intensity. Lower = lighter, higher = darker.', type: 'float', default: '1.0', min: 0.1, max: 10 },
+            { key: 'shadow_map_max_distance', label: 'Shadow Distance', desc: 'Maximum distance to render shadows.', type: 'float', default: '140.0', min: 10, max: 1000 },
+            { key: 'shadow_map_texture_size', label: 'Shadow Map Size', desc: 'Shadow map texture size. Larger = better quality but more expensive.', type: 'enum', default: '2048', values: ['128','256','512','1024','2048','4096','8192'] },
+            { key: 'shadow_filters', label: 'Shadow Filter Quality', desc: 'Shadow filtering quality. 0=off, 1=PCF, 2=Poisson.', type: 'enum', default: '1', values: ['0','1','2'] },
+            { key: 'shadow_map_color', label: 'Colored Shadows', desc: 'Enable colored shadows for translucent nodes (expensive).', type: 'bool', default: 'false' },
+            { key: 'shadow_soft_radius', label: 'Shadow Soft Radius', desc: 'Soft shadow radius. Lower = sharper, higher = softer.', type: 'float', default: '5.0', min: 1, max: 15 },
+          ]
+        },
+        {
+          title: 'Graphics — Post Processing',
+          settings: [
+            { key: 'enable_post_processing', label: 'Post Processing', desc: 'Enable post processing pipeline.', type: 'bool', default: 'false' },
+            { key: 'tone_mapping', label: 'Tone Mapping', desc: "Enable Hable's 'Uncharted 2' filmic tone mapping.", type: 'bool', default: 'false' },
+            { key: 'enable_auto_exposure', label: 'Auto Exposure', desc: 'Automatically adjust to scene brightness.', type: 'bool', default: 'false' },
+            { key: 'exposure_compensation', label: 'Exposure Compensation', desc: 'Exposure compensation in EV units. 0 = none.', type: 'float', default: '0.0', min: -1, max: 1 },
+            { key: 'debanding', label: 'Debanding', desc: 'Apply dithering to reduce color banding artifacts.', type: 'bool', default: 'false' },
+            { key: 'enable_bloom', label: 'Bloom', desc: 'Bright colors bleed over neighboring objects.', type: 'bool', default: 'false' },
+            { key: 'enable_volumetric_lighting', label: 'Volumetric Lighting', desc: 'Enable volumetric lighting (godrays) effect.', type: 'bool', default: 'false' },
+            { key: 'enable_translucent_foliage', label: 'Translucent Foliage', desc: 'Simulate translucency when looking at foliage in sunlight.', type: 'bool', default: 'false' },
+            { key: 'enable_water_reflections', label: 'Water Reflections', desc: 'Simulate liquid reflections.', type: 'bool', default: 'false' },
+          ]
+        },
+        {
+          title: 'Audio',
+          settings: [
+            { key: 'sound_volume', label: 'Volume', desc: 'Volume of all sounds (0 to 1).', type: 'float', default: '0.8', min: 0, max: 1 },
+            { key: 'sound_volume_unfocused', label: 'Volume (unfocused)', desc: 'Volume multiplier when window is not focused.', type: 'float', default: '0.3', min: 0, max: 1 },
+            { key: 'mute_sound', label: 'Mute Sound', desc: 'Mute all sounds. Can also be toggled in-game.', type: 'bool', default: 'false' },
+          ]
+        },
+        {
+          title: 'HUD & Interface',
+          settings: [
+            { key: 'hud_scaling', label: 'HUD Scale', desc: 'Size of HUD elements.', type: 'float', default: '1.0', min: 0.5, max: 20 },
+            { key: 'hud_hotbar_max_width', label: 'Hotbar Max Width', desc: 'Maximum proportion of window width for hotbar.', type: 'float', default: '1.0', min: 0.001, max: 1 },
+            { key: 'gui_scaling', label: 'GUI Scale', desc: 'Scale all GUI elements by this factor.', type: 'float', default: '1.0', min: 0.5, max: 20 },
+            { key: 'show_nametag_backgrounds', label: 'Nametag Backgrounds', desc: 'Show backgrounds behind player name tags.', type: 'bool', default: 'true' },
+            { key: 'smooth_scrolling', label: 'Smooth Scrolling', desc: 'Enable smooth scrolling in menus.', type: 'bool', default: 'true' },
+            { key: 'inventory_items_animations', label: 'Inventory Animations', desc: 'Animate inventory items.', type: 'bool', default: 'false' },
+            { key: 'tooltip_show_delay', label: 'Tooltip Delay (ms)', desc: 'Delay before tooltips appear.', type: 'int', default: '400', min: 0, max: 3000 },
+            { key: 'tooltip_append_itemname', label: 'Tooltip Item Name', desc: 'Append item name to tooltip.', type: 'bool', default: 'false' },
+            { key: 'node_highlighting', label: 'Node Highlighting', desc: 'Method used to highlight selected nodes.', type: 'enum', default: 'box', values: ['box','halo','none'] },
+            { key: 'recent_chat_messages', label: 'Recent Chat Messages', desc: 'Maximum number of recent chat messages shown.', type: 'int', default: '6', min: 2, max: 20 },
+            { key: 'chat_font_size', label: 'Chat Font Size (pt)', desc: 'Font size for chat. 0 = default.', type: 'int', default: '0', min: 0, max: 72 },
+            { key: 'console_height', label: 'Console Height', desc: 'In-game chat console height as fraction of screen.', type: 'float', default: '0.6', min: 0.1, max: 1 },
+          ]
+        },
+      ];
+
+      const SETTINGS_LS_KEY = SETTINGS_STORAGE_KEY;
+
+      function loadStoredSettings() {
+          try {
+              return JSON.parse(localStorage.getItem(SETTINGS_LS_KEY) || '{}');
+          } catch (_) { return {}; }
+      }
+
+      function saveStoredSettings(map) {
+          localStorage.setItem(SETTINGS_LS_KEY, JSON.stringify(map));
+      }
+
+      function getSettingValue(key, defaults) {
+          const stored = loadStoredSettings();
+          if (Object.prototype.hasOwnProperty.call(stored, key)) return stored[key];
+          return defaults;
+      }
+
+      function buildSettingsUI() {
+          const container = document.getElementById('game_settings_container');
+          if (!container) return;
+          const stored = loadStoredSettings();
+
+          GAME_SETTINGS_GROUPS.forEach(group => {
+              const panel = document.createElement('section');
+              panel.className = 'panel settings-group';
+
+              const titleEl = document.createElement('div');
+              titleEl.className = 'settings-group-title';
+              titleEl.textContent = group.title;
+              panel.appendChild(titleEl);
+
+              group.settings.forEach(s => {
+                  const currentVal = Object.prototype.hasOwnProperty.call(stored, s.key) ? stored[s.key] : s.default;
+                  const row = document.createElement('div');
+                  row.className = 'setting-row';
+
+                  const labelWrap = document.createElement('div');
+                  labelWrap.className = 'setting-label-wrap';
+                  const labelEl = document.createElement('span');
+                  labelEl.className = 'setting-label';
+                  labelEl.textContent = s.label;
+                  const descEl = document.createElement('span');
+                  descEl.className = 'setting-desc';
+                  descEl.textContent = s.desc;
+                  labelWrap.appendChild(labelEl);
+                  labelWrap.appendChild(descEl);
+
+                  const ctrl = document.createElement('div');
+                  ctrl.className = 'setting-control';
+
+                  function saveVal(val) {
+                      const m = loadStoredSettings();
+                      m[s.key] = val;
+                      saveStoredSettings(m);
+                  }
+
+                  if (s.type === 'bool') {
+                      const cb = document.createElement('input');
+                      cb.type = 'checkbox';
+                      cb.checked = currentVal === 'true';
+                      cb.addEventListener('change', () => saveVal(cb.checked ? 'true' : 'false'));
+                      ctrl.appendChild(cb);
+                  } else if (s.type === 'enum') {
+                      const sel = document.createElement('select');
+                      s.values.forEach(v => {
+                          const opt = document.createElement('option');
+                          opt.value = v; opt.textContent = v;
+                          if (v === currentVal) opt.selected = true;
+                          sel.appendChild(opt);
+                      });
+                      sel.addEventListener('change', () => saveVal(sel.value));
+                      ctrl.appendChild(sel);
+                  } else if (s.type === 'float' || s.type === 'int') {
+                      if (s.min !== undefined && s.max !== undefined) {
+                          const step = s.type === 'int' ? 1 : Math.min(0.01, (s.max - s.min) / 100);
+                          const range = document.createElement('input');
+                          range.type = 'range';
+                          range.min = s.min; range.max = s.max; range.step = step;
+                          range.value = currentVal;
+                          const valLabel = document.createElement('span');
+                          valLabel.className = 'setting-range-val';
+                          valLabel.textContent = parseFloat(currentVal).toFixed(s.type === 'int' ? 0 : 2);
+                          range.addEventListener('input', () => {
+                              const v = s.type === 'int' ? String(parseInt(range.value)) : String(parseFloat(range.value).toFixed(s.type === 'int' ? 0 : 2));
+                              valLabel.textContent = v;
+                              saveVal(v);
+                          });
+                          ctrl.appendChild(range);
+                          ctrl.appendChild(valLabel);
+                      } else {
+                          const inp = document.createElement('input');
+                          inp.type = 'number';
+                          inp.value = currentVal;
+                          if (s.min !== undefined) inp.min = s.min;
+                          inp.step = s.type === 'int' ? 1 : 0.01;
+                          inp.addEventListener('change', () => saveVal(inp.value));
+                          ctrl.appendChild(inp);
+                      }
+                  } else {
+                      // string / key / path
+                      const inp = document.createElement('input');
+                      inp.type = 'text';
+                      inp.value = currentVal;
+                      inp.addEventListener('change', () => saveVal(inp.value));
+                      ctrl.appendChild(inp);
+                  }
+
+                  row.appendChild(labelWrap);
+                  row.appendChild(ctrl);
+                  panel.appendChild(row);
+              });
+
+              container.appendChild(panel);
+          });
+
+          // Reset button panel
+          const resetPanel = document.createElement('section');
+          resetPanel.className = 'panel';
+          resetPanel.style.display = 'flex';
+          resetPanel.style.justifyContent = 'space-between';
+          resetPanel.style.alignItems = 'center';
+          resetPanel.style.gap = '12px';
+          const resetNote = document.createElement('span');
+          resetNote.style.fontSize = '0.85rem';
+          resetNote.style.color = 'var(--muted)';
+          resetNote.textContent = 'Settings are saved automatically and applied on next launch.';
+          const resetBtn = document.createElement('button');
+          resetBtn.type = 'button';
+          resetBtn.className = 'settings-reset-btn';
+          resetBtn.textContent = 'Reset to Defaults';
+          resetBtn.addEventListener('click', () => {
+              if (!confirm('Reset all game settings to their defaults?')) return;
+              localStorage.removeItem(SETTINGS_LS_KEY);
+              container.innerHTML = '';
+              buildSettingsUI();
+          });
+          resetPanel.appendChild(resetNote);
+          resetPanel.appendChild(resetBtn);
+          container.appendChild(resetPanel);
+      }
+
+      function applyUserSettings(mtl) {
+          const stored = loadStoredSettings();
+          // Apply all stored settings. Device defaults (touch/desktop) are applied
+          // after this by applyDeviceDefaults so they can override when needed.
+          GAME_SETTINGS_GROUPS.forEach(group => {
+              group.settings.forEach(s => {
+                  const val = Object.prototype.hasOwnProperty.call(stored, s.key) ? stored[s.key] : null;
+                  if (val !== null && val !== s.default) {
+                      mtl.setConf(s.key, val);
+                  }
+              });
+          });
+      }
+
+      buildSettingsUI();
+      // ===== end Game Settings Engine =====
 
             setupInstallPanel();
     </script>
