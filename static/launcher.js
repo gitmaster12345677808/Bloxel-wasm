@@ -13,6 +13,8 @@ html {
     width: 100%;
     height: 100%;
     background-color: black;
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 body {
@@ -726,6 +728,10 @@ function activateBody() {
             }
         });
     }
+    // Prevent the page from scrolling at all — pointer-lock mouse deltas
+    // can cause the document to drift when pitch hits its limits.
+    window.addEventListener('scroll', () => { window.scrollTo(0, 0); }, { passive: true });
+
     // Triggers the first and all future updates
     consoleUpdate();
 
@@ -845,6 +851,8 @@ var emsocket_set_proxy;
 var emsocket_set_vpn;
 var webxr_inject_mouse_delta;
 var webxr_queue_chat_message;
+var webxr_set_look;   // absolute orientation per XR frame (replaces delta accumulation)
+var webxr_clear_look; // restore normal mouse control when VR session ends
 
 // Called when the wasm module is ready
 function emloop_ready() {
@@ -862,6 +870,8 @@ function emloop_ready() {
     emsocket_set_vpn = cwrap("emsocket_set_vpn", null, ["number"]);
     webxr_inject_mouse_delta = cwrap("webxr_inject_mouse_delta", null, ["number", "number"]);
     webxr_queue_chat_message  = cwrap("webxr_queue_chat_message",  null, ["string"]);
+    webxr_set_look            = cwrap("webxr_set_look",            null, ["number", "number"]);
+    webxr_clear_look          = cwrap("webxr_clear_look",          null, []);
     mtScheduler.setCondition("wasmReady");
 }
 
@@ -1448,20 +1458,21 @@ class MinetestLauncher {
 }
 
 // ===== WebXR VR Manager =====
-// Provides full WebXR immersive-vr support for Meta Quest Browser.
+// Provides full WebXR immersive-vr support for Meta Quest Browser and Pico Browser.
 //
 // Features:
 //   • Enters an immersive-vr WebXR session using the game's WebGL2 context
 //   • Maps 6-DoF head rotation → synthetic mousemove events → in-game look
-//   • Maps Quest controller input → keyboard/mouse events → movement/interaction
+//   • Maps Quest/Pico controller input → keyboard/mouse events → movement/interaction
 //   • Blits the game's rendered frame to the XR compositor framebuffer each tick
 //   • Falls back to Gamepad API + DeviceOrientation on non-immersive browsers
 //
-// Controller layout (Quest 2/3, WebXR gamepad spec):
+// Controller layout (Quest 2/3 and Pico 4, WebXR gamepad spec):
 //   Left:  trigger(0)=Jump  grip(1)=Sneak  X(4)=Inventory  Y(5)=Menu
 //          thumbstick axes[2,3] → WASD movement
 //   Right: trigger(0)=Dig(LMB)  grip(1)=Place(RMB)  A(4)=Drop  B(5)=Chat
 //          thumbstick axes[2,3] → hotbar scroll
+// Supported headsets: Meta Quest 2/3/Pro, Pico 4, Pico Neo 3 (Pico Browser v5+)
 
 class WebXRManager {
     constructor() {
@@ -1470,6 +1481,7 @@ class WebXRManager {
         this._refSpace      = null;
         this._gl            = null;
         this._prevOrient    = null;
+        this._xrCalibQuat   = null; // calibration quaternion for absolute orientation
         this._gamepadStates = new Map();
         this._deviceOriHandler = null;
         this._gamepadPollId    = null;
@@ -1579,7 +1591,7 @@ class WebXRManager {
         } catch (err) {
             console.error('[WebXR] Failed to start immersive-vr session:', err);
             alert('Could not start VR session: ' + err.message +
-                '\nEnsure you are using Meta Quest Browser 21+ and have WebXR enabled.');
+                '\nEnsure you are using Meta Quest Browser (v21+) or Pico Browser (v5+) with WebXR enabled.');
         }
     }
 
@@ -1589,6 +1601,7 @@ class WebXRManager {
         } else {
             // Escape fallback mode.
             this._inVR = false;
+            this._xrCalibQuat = null;
             this._stopGamepadPoll();
             this._removeDeviceOriListener();
             this._setButtonActive(false);
@@ -1596,14 +1609,17 @@ class WebXRManager {
     }
 
     _onSessionEnd() {
-        this._session    = null;
-        this._xrLayer    = null;
-        this._refSpace   = null;
-        this._inVR       = false;
-        this._prevOrient = null;
+        this._session      = null;
+        this._xrLayer      = null;
+        this._refSpace     = null;
+        this._inVR         = false;
+        this._prevOrient   = null;
+        this._xrCalibQuat  = null; // reset calibration for next VR session
         this._stopGamepadPoll();
         this._removeDeviceOriListener();
         this._setButtonActive(false);
+        // Return camera control to normal mouse/keyboard input.
+        if (webxr_clear_look) webxr_clear_look();
         // Restore canvas geometry after exiting VR.
         if (typeof fixGeometry === 'function') fixGeometry(true);
     }
@@ -1637,20 +1653,14 @@ class WebXRManager {
             return;
         }
 
-        // 4. Normal mode: parallax-crop blit to each eye viewport.
+        // 4. Normal mode: blit the full mono frame to each eye viewport.
         //
-        // The engine renders a normal (mono) frame to the default framebuffer.
-        // Each eye gets a slightly different horizontal crop derived from the
-        // eye's lateral position in the XR reference space (view.transform.position.x).
-        // On Quest this is typically ±0.032 m (64 mm IPD).
-        //
-        // Positive eyeX (right eye) → that eye sits to the right, so objects
-        // appear shifted LEFT relative to center.  We skip `shiftPx` pixels on
-        // the LEFT side of the source image to replicate this shift.
-        // Similarly the left eye (negative eyeX) crops from the right side.
-        //
-        // Scale factor: Minetest default horizontal FoV ≈ 72°,
-        //   tan(36°) ≈ 0.727 → pixelsPerMetre ≈ (W/2) / 0.727 ≈ W * 0.687.
+        // The engine renders a single (mono) frame. The camera direction is
+        // already updated each tick by _processHeadPose(), so the game world
+        // visually follows head rotation correctly. We simply copy the full
+        // frame to both eyes without any horizontal crop or shift: crops caused
+        // the image to stretch and become off-centre when head position drifted
+        // beyond the canvas width.
         const xrFb = this._xrLayer.framebuffer;
         if (xrFb) {
             gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
@@ -1658,13 +1668,9 @@ class WebXRManager {
             const W = mtCanvas.width;
             const H = mtCanvas.height;
             for (const view of pose.views) {
-                const vp      = this._xrLayer.getViewport(view);
-                const eyeX    = view.transform.position.x;
-                const shiftPx = Math.round(eyeX * W * 0.687);
-                const srcX0   = Math.max(0,  shiftPx);
-                const srcX1   = Math.min(W, W + shiftPx);
+                const vp = this._xrLayer.getViewport(view);
                 gl.blitFramebuffer(
-                    srcX0, 0, srcX1, H,
+                    0, 0, W, H,
                     vp.x, vp.y, vp.x + vp.width, vp.y + vp.height,
                     gl.COLOR_BUFFER_BIT, gl.LINEAR
                 );
@@ -1676,25 +1682,44 @@ class WebXRManager {
     // ── Head tracking ─────────────────────────────────────────────────────────
 
     _processHeadPose(quat) {
-        const { x, y, z, w } = quat;
-        // Quaternion → yaw (left/right, Y-axis) and pitch (up/down, X-axis).
-        const yaw   = Math.atan2(2 * (w * y + x * z), 1 - 2 * (y * y + z * z));
-        const sinp  = Math.max(-1, Math.min(1, 2 * (w * x - z * y)));
-        const pitch = Math.asin(sinp);
+        const { x: cx, y: cy, z: cz, w: cw } = quat;
 
-        if (this._prevOrient !== null) {
-            let dy = yaw - this._prevOrient.yaw;
-            // Wrap-around correction at ±π.
-            if (dy >  Math.PI) dy -= 2 * Math.PI;
-            if (dy < -Math.PI) dy += 2 * Math.PI;
-            const dp = pitch - this._prevOrient.pitch;
-            const SENS = 600; // pixels per radian
-            // Both axes are negated: WebXR pose deltas use OpenXR conventions
-            // (right-hand coordinate system) which are opposite to Irrlicht/SDL's
-            // expected movementX/movementY sign for look-right and look-up.
-            this._dispatchMouseDelta(-dy * SENS, -dp * SENS);
+        // ── Calibration: record the initial headset orientation the first time
+        // this is called in a VR session.  All subsequent frames express the
+        // orientation RELATIVE to this reference, so when the player looks
+        // back to the calibration direction the relative value is exactly
+        // (0, 0) and the game camera returns to its starting position.
+        // This completely eliminates drift: values are derived fresh from the
+        // raw quaternion each frame, never accumulated from frame to frame.
+        if (!this._xrCalibQuat) {
+            this._xrCalibQuat = { x: cx, y: cy, z: cz, w: cw };
         }
-        this._prevOrient = { yaw, pitch };
+        const { x: bx, y: by, z: bz, w: bw } = this._xrCalibQuat;
+
+        // Compute q_rel = q_current ⊗ conjugate(q_calib)
+        // This is the rotation FROM the calibration pose TO the current pose,
+        // expressed in world space.
+        //   conjugate(q_calib) = (-bx, -by, -bz, bw)
+        const rqw =  cw*bw + cx*bx + cy*by + cz*bz;
+        const rqx = -cw*bx + cx*bw - cy*bz + cz*by;
+        const rqy = -cw*by + cx*bz + cy*bw - cz*bx;
+        const rqz = -cw*bz - cx*by + cy*bx + cz*bw;
+
+        // Extract yaw (Y-axis, right = positive) and pitch (X-axis, up = positive)
+        // from q_rel using standard Tait-Bryan decomposition.
+        // Because this is an absolute value (not a delta), the atan2/asin formulas
+        // are numerically stable at all orientations Minetest permits (pitch ≤ 90°).
+        const yaw_rel   = Math.atan2(2*(rqw*rqy + rqx*rqz), 1 - 2*(rqy*rqy + rqz*rqz));
+        const sinp      = Math.max(-1, Math.min(1, 2*(rqw*rqx - rqz*rqy)));
+        const pitch_rel = Math.asin(sinp);
+
+        // Convert to degrees and push directly into the engine's camera.
+        // The engine adds these to the cam orientation captured at VR start,
+        // resulting in zero drift regardless of how the player moves.
+        if (webxr_set_look) {
+            const RAD2DEG = 180 / Math.PI;
+            webxr_set_look(yaw_rel * RAD2DEG, pitch_rel * RAD2DEG);
+        }
     }
 
     _dispatchMouseDelta(dx, dy) {
@@ -1777,8 +1802,13 @@ class WebXRManager {
             const pads = navigator.getGamepads ? navigator.getGamepads() : [];
             for (const gp of pads) {
                 if (!gp) continue;
-                // Heuristic: Quest controllers identify themselves in the id string.
-                const h = gp.id.toLowerCase().includes('left') ? 'left' : 'right';
+                // Detect handedness from the gamepad id string when possible
+                // (Quest controllers include 'left'/'right'; Pico controllers do not,
+                // so fall back to even=left / odd=right index convention).
+                const idLow = gp.id.toLowerCase();
+                const h = idLow.includes('left') ? 'left'
+                        : idLow.includes('right') ? 'right'
+                        : (gp.index % 2 === 0 ? 'left' : 'right');
                 this._handleControllerInput(gp, h);
             }
             this._gamepadPollId = requestAnimationFrame(poll);
@@ -2273,7 +2303,7 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
 
     _renderYMenuFrame(frame, pose, gl) {
         // World-space layout  (Y=up, -Z=forward, local-floor reference space)
-        const GAME_Z = -2.2, GAME_CX = 0, GAME_CY = 1.45, GAME_HW = 1.2,  GAME_HH = 0.675;
+        const GAME_Z = -2.2, GAME_CX = 0, GAME_CY = 2.1, GAME_HW = 1.4,  GAME_HH = 0.788;
         const MENU_Z = -1.8, MENU_CX = 0, MENU_CY = 0.55, MENU_HW = 0.9,  MENU_HH = 0.45;
 
         const saved = this._saveGL(gl);
@@ -2939,9 +2969,9 @@ void main() { fragColor = vec4(1.0, 0.35, 0.1, 0.9); }`;
 
         // World-space layout (local-floor, Y=up, -Z=forward)
         const GAME_Z  = -2.2;  // game screen Z position
-        const GAME_CY = 1.45;  // game screen centre height (eye level)
-        const GAME_HW = 1.2;   // game screen half-width  → 2.4 m wide
-        const GAME_HH = 0.675; // game screen half-height → 1.35 m tall (16:9)
+        const GAME_CY = 2.1;   // game screen centre height (above menu)
+        const GAME_HW = 1.4;   // game screen half-width  → 2.8 m wide
+        const GAME_HH = 0.788; // game screen half-height → 1.576 m tall (16:9)
         const MENU_Z  = -1.85;
         const MENU_CY = 0.55;
         const MENU_HW = 0.9;
