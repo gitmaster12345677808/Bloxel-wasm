@@ -18,7 +18,7 @@ html {
 }
 
 body {
-    font-family: Verdana, Geneva, sans-serif;
+    font-family: 'Nunito', 'Arial Rounded MT Bold', Arial, sans-serif;
   margin: 0;
     padding: 0;
   background-color: black;
@@ -50,352 +50,425 @@ canvas.emscripten {
     touch-action: none;
 }
 
-#controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 8px 0;
-    font-size: 14px;
-}
-
-#controls span {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-#controls select,
-#controls input[type="button"] {
-    min-height: 40px;
-    border: 1px solid #3b4756;
-    border-radius: 10px;
-    background: #0d131a;
-    color: #f4f7fb;
-    padding: 0 12px;
-}
-
-#visor_toggle {
-    min-height: 40px;
-    border: 1px solid #3b4756;
-    border-radius: 10px;
-    background: #0d131a;
-    color: #f4f7fb;
-    padding: 0 12px;
-    cursor: pointer;
-}
-
-#vr_toggle_btn {
-    min-height: 40px;
-    border: 1px solid #5a3090;
-    border-radius: 10px;
-    background: #1a0d2b;
-    color: #c89af4;
-    padding: 0 12px;
-    cursor: pointer;
-    font-weight: 700;
-}
-
-#vr_toggle_btn.vr-active {
-    background: #3b1a6e;
-    border-color: #9b59f7;
-    color: #f0eafa;
-}
-
-#controls_hint {
-    color: #9ca9bc;
-}
-
-#join_code_banner {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    background: rgba(10, 40, 22, 0.9);
-    border: 1px solid #2a6040;
-    border-radius: 10px;
-    padding: 4px 12px;
-    font-size: 12px;
-    color: #a8f0c8;
-    cursor: pointer;
-    user-select: all;
-    max-width: 280px;
+/* ── Layout ─────────────────────────────────────────── */
+body {
+    font-family: 'Nunito', 'Arial Rounded MT Bold', Arial, sans-serif;
+    margin: 0; padding: 0;
+    background-color: black;
+    color: #dbe4f0;
+    width: 100%; height: 100svh;
     overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    overscroll-behavior: none;
+    display: flex;
+    align-items: stretch;
 }
 
-#join_code_banner.visible {
-    display: inline-flex;
-}
-
-#join_code_banner .jcb-label {
-    font-size: 10px;
-    color: #6aad8a;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    flex-shrink: 0;
-}
-
-#join_code_text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-#join_code_banner .jcb-copy-hint {
-    font-size: 10px;
-    color: #6aad8a;
-    flex-shrink: 0;
-}
-
-.console {
-    width: min(100%, 1200px);
-  margin: 0 auto;
-    margin-top: 0;
-    border: 1px solid #1d2631;
-    border-radius: 12px;
-    padding-left: 0;
-    padding-right: 0;
-  display: block;
-    background-color: #020406;
-  color: white;
-  font-family: 'Lucida Console', Monaco, monospace;
-  outline: none;
-    box-sizing: border-box;
-    resize: none;
-}
-
-#header {
-    flex: 0 0 auto;
-    padding: max(8px, env(safe-area-inset-top)) 12px 0;
-}
-
-#footer {
-    flex: 0 0 auto;
-    padding: 8px 12px max(10px, env(safe-area-inset-bottom));
+canvas.emscripten {
+    border: 0 none;
+    background-color: black;
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    touch-action: none;
 }
 
 #canvas_container {
     flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     display: flex;
     position: relative;
     align-items: center;
     justify-content: center;
-    padding: 8px 12px;
     overflow: hidden;
 }
 
-body.visor-hidden #header,
-body.visor-hidden #footer {
+/* ── Floating menu button (always on right edge of canvas) ── */
+#side_menu_btn {
+    position: absolute;
+    right: max(10px, env(safe-area-inset-right));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(8, 22, 52, 0.82);
+    border: 1px solid rgba(90, 160, 255, 0.3);
+    border-top-color: rgba(180, 218, 255, 0.45);
+    color: #f4f7fb;
+    font-size: 20px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: background 0.15s;
+}
+#side_menu_btn:hover { background: rgba(28, 60, 120, 0.92); }
+#side_menu_btn .smb-badge {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 10px; height: 10px;
+    background: #ef4444;
+    border-radius: 50%;
     display: none;
 }
+#side_menu_btn .smb-badge.visible { display: block; }
 
-body.visor-hidden #canvas_container {
-    padding-top: max(8px, env(safe-area-inset-top));
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
-}
-
-#overlay_visor_button {
+/* ── Slide-out panel ─────────────────────────────────── */
+#side_menu_backdrop {
     display: none;
     position: absolute;
-    top: max(10px, env(safe-area-inset-top));
-    right: max(10px, env(safe-area-inset-right));
-    z-index: 10;
-    min-height: 40px;
-    padding: 0 14px;
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 10px;
-    background: rgba(13, 19, 26, 0.75);
-    color: #f4f7fb;
-    font-size: 14px;
-    cursor: pointer;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    inset: 0;
+    z-index: 150;
+    background: rgba(0,0,0,0.4);
 }
+#side_menu_backdrop.open { display: block; }
 
-body.visor-hidden #overlay_visor_button {
-    display: inline-flex;
-    align-items: center;
-}
-
-#overlay_chat_button {
-    display: none;
+#side_menu_panel {
     position: absolute;
-    bottom: max(10px, env(safe-area-inset-bottom));
-    right: max(10px, env(safe-area-inset-right));
-    z-index: 10;
-    min-height: 40px;
-    padding: 0 14px;
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 10px;
-    background: rgba(13, 19, 26, 0.75);
-    color: #f4f7fb;
-    font-size: 14px;
-    cursor: pointer;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    top: 0; bottom: 0;
+    right: 0;
+    z-index: 200;
+    width: min(320px, 92vw);
+    background: rgba(8, 16, 38, 0.97);
+    border-left: 1px solid rgba(90, 160, 255, 0.2);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.26s cubic-bezier(0.32,0.72,0,1);
+    padding: max(14px, env(safe-area-inset-top)) 0 max(14px, env(safe-area-inset-bottom));
+    box-sizing: border-box;
 }
+#side_menu_panel.open { transform: translateX(0); }
 
-body.visor-hidden #overlay_chat_button {
-    display: inline-flex;
+.sm-header {
+    display: flex;
     align-items: center;
+    justify-content: space-between;
+    padding: 0 16px 14px;
+    border-bottom: 1px solid rgba(90,160,255,0.12);
+    flex-shrink: 0;
+}
+.sm-title {
+    font-weight: 900;
+    font-size: 15px;
+    color: #f4f7fb;
+    letter-spacing: 0.02em;
+}
+#sm_close_btn {
+    background: none;
+    border: none;
+    color: #7aacce;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    line-height: 1;
+    font-family: inherit;
+}
+#sm_close_btn:hover { background: rgba(255,255,255,0.08); }
+
+.sm-section {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(90,160,255,0.08);
+    flex-shrink: 0;
+}
+.sm-section-title {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(122,172,206,0.7);
+    margin: 0 0 8px;
 }
 
+.sm-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.sm-row:last-child { margin-bottom: 0; }
+.sm-row label {
+    font-size: 12px;
+    color: #94afd6;
+    flex: 0 0 70px;
+}
+.sm-row select {
+    flex: 1;
+    min-height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(90,160,255,0.25);
+    background: rgba(8,24,56,0.85);
+    color: #f4f7fb;
+    padding: 0 8px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+}
+
+.sm-btn {
+    width: 100%;
+    min-height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(90,160,255,0.25);
+    border-top-color: rgba(180,218,255,0.35);
+    background: rgba(8,24,56,0.85);
+    color: #f4f7fb;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 6px;
+    text-align: center;
+}
+.sm-btn:last-child { margin-bottom: 0; }
+.sm-btn:hover { background: rgba(28,60,120,0.85); }
+.sm-btn.green { background: rgba(0,100,50,0.75); border-color: rgba(0,176,111,0.45); border-top-color: rgba(0,200,130,0.6); color: #6ee7b7; }
+.sm-btn.blue  { background: rgba(18,60,140,0.75); border-color: rgba(28,107,255,0.45); color: #a0c8ff; }
+.sm-btn.blue.vr-active { background: #1c6bff; border-color: rgba(120,180,255,0.6); color: #fff; box-shadow: 0 4px 14px rgba(28,107,255,0.5); }
+
+#join_code_banner {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,40,20,0.88);
+    border: 1px solid rgba(0,176,111,0.4);
+    border-top-color: rgba(0,200,130,0.55);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    color: #6ee7b7;
+    cursor: pointer;
+    user-select: all;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+}
+#join_code_banner.visible { display: flex; }
+#join_code_banner .jcb-label { font-size: 10px; color: #34d399; text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0; font-weight: 800; }
+#join_code_text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; min-width: 0; }
+#join_code_banner .jcb-copy-hint { font-size: 10px; color: #34d399; flex-shrink: 0; font-weight: 700; }
+
+/* ── Friends list in slide-out ───────────────────────── */
+#sm_friends_section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 12px 16px; }
+.sm-friends-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1 1 auto; margin-top: 6px; }
+.sm-friend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(90,160,255,0.08);
+}
+.sm-friend-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+.sm-friend-dot.online { background: #22c55e; box-shadow: 0 0 5px #22c55e88; }
+.sm-friend-name { flex: 1; font-size: 13px; font-weight: 700; color: #dbe4f0; }
+.sm-friend-status { font-size: 11px; color: #7aacce; }
+.sm-friend-btns { display: flex; gap: 4px; flex-shrink: 0; }
+.sm-friend-btns button {
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    border: 1px solid rgba(90,160,255,0.22);
+    background: rgba(8,24,56,0.85);
+    color: #c0d8ff;
+}
+.sm-friend-btns button.invite-btn { background: rgba(0,80,40,0.75); border-color: rgba(0,176,111,0.35); color: #6ee7b7; }
+.sm-friends-empty { font-size: 12px; color: #7aacce; font-style: italic; margin-top: 6px; }
+
+/* ── In-game chat overlay ────────────────────────────── */
 #chat_overlay {
     display: none;
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 20;
+    bottom: 0; left: 0; right: 0;
+    z-index: 300;
     padding: 8px 12px max(10px, env(safe-area-inset-bottom));
-    background: rgba(13, 19, 26, 0.88);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(8, 22, 52, 0.92);
+    border-top: 1px solid rgba(90,160,255,0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     align-items: center;
     gap: 8px;
 }
-
-#chat_overlay.visible {
-    display: flex;
-}
+#chat_overlay.visible { display: flex; }
 
 #chat_input {
     flex: 1 1 auto;
-    min-height: 40px;
-    border: 1px solid #3b4756;
+    min-height: 38px;
+    border: 1.5px solid rgba(90,160,255,0.28);
     border-radius: 10px;
-    background: #0d131a;
+    background: rgba(8,24,56,0.9);
     color: #f4f7fb;
     padding: 0 12px;
     font-size: 15px;
+    font-family: inherit;
     outline: none;
     box-sizing: border-box;
 }
-
 #chat_send_btn, #chat_cancel_btn {
-    min-height: 40px;
+    min-height: 38px;
     padding: 0 14px;
-    border: 1px solid #3b4756;
+    border: 1px solid rgba(90,160,255,0.25);
+    border-top-color: rgba(180,218,255,0.38);
     border-radius: 10px;
-    background: #0d131a;
+    background: rgba(8,24,56,0.85);
     color: #f4f7fb;
     font-size: 14px;
+    font-family: inherit;
+    font-weight: 700;
     cursor: pointer;
     flex-shrink: 0;
 }
-
-#chat_send_btn {
-    background: #0d2b1a;
-    border-color: #2a6040;
-}
-
+#chat_send_btn { background: rgba(0,100,50,0.75); border-color: rgba(0,176,111,0.45); border-top-color: rgba(0,200,130,0.6); color: #6ee7b7; }
 #chat_mode_btn {
-    min-height: 40px;
+    min-height: 38px;
     padding: 0 10px;
-    border: 1px solid #3b4756;
+    border: 1px solid rgba(90,160,255,0.25);
     border-radius: 10px;
-    background: #1a1a0d;
-    color: #c8b86a;
+    background: rgba(14,28,60,0.82);
+    color: #94afd6;
     font-size: 13px;
+    font-family: inherit;
+    font-weight: 700;
     cursor: pointer;
     flex-shrink: 0;
     white-space: nowrap;
 }
+#chat_mode_btn.replace-mode { background: rgba(18,60,140,0.75); border-color: rgba(28,107,255,0.45); color: #a0c8ff; }
 
-#chat_mode_btn.replace-mode {
-    background: #1a0d2b;
-    border-color: #5a3090;
-    color: #c89af4;
-}
-
-
-
+/* ── Progress bar ────────────────────────────────────── */
 #progressbar_div {
-    margin: 0 auto 8px;
-    width: min(460px, 100%);
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(460px, 90%);
+    z-index: 50;
 }
+#progressbar { width: 100%; height: 12px; }
 
-#progressbar {
+/* ── Console ─────────────────────────────────────────── */
+.console {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 250;
+    max-height: 200px;
+    border: none;
+    border-top: 1px solid rgba(90,160,255,0.2);
+    padding: 0;
+    display: block;
+    background-color: rgba(6,14,28,0.96);
+    color: #c0d8f0;
+    font-family: 'Lucida Console', Monaco, monospace;
+    outline: none;
+    box-sizing: border-box;
+    resize: none;
     width: 100%;
-    height: 12px;
-}
-
-@media (max-width: 700px) {
-    #controls {
-        font-size: 13px;
-    }
-
-    #controls span {
-        width: 100%;
-        justify-content: center;
-    }
 }
 `;
 
 const rtHTML = `
-  <div id="header">
+  <div class="emscripten" id="canvas_container">
 
-  <div class="emscripten">
-    <span id="controls">
-      <span>
-        <select id="resolution" onchange="fixGeometry()">
-          <option value="high">High Res</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low Res</option>
-        </select>
-      </span>
-      <span>
-        <select id="aspectRatio" onchange="fixGeometry()">
-          <option value="any">Fit Screen</option>
-          <option value="4:3">4:3</option>
-          <option value="16:9">16:9</option>
-          <option value="5:4">5:4</option>
-          <option value="21:9">21:9</option>
-          <option value="32:9">32:9</option>
-          <option value="1:1">1:1</option>
-        </select>
-      </span>
-            <span>
-                <input id="console_button" type="button" value="Show Console" onclick="consoleToggle()">
-                <input id="visor_toggle" type="button" value="Hide Visor" onclick="toggleVisorMode()">
-                <input id="chat_button" type="button" value="Chat" onclick="openChatOverlay()">
-                <input id="voice_btn" type="button" value="🎤 Voice" onclick="openVoiceWindow()">
-                <input id="vr_toggle_btn" type="button" value="VR Mode" onclick="window.vrManager && window.vrManager.toggleVR()">
-            </span>
-            <span id="controls_hint">Landscape works best on phones and tablets.</span>
+    <!-- Floating menu button -->
+    <button id="side_menu_btn" onclick="toggleSideMenu()" title="Menu">
+      &#9776;
+      <span class="smb-badge" id="smb_badge" hidden></span>
+    </button>
+
+    <!-- Backdrop -->
+    <div id="side_menu_backdrop" onclick="closeSideMenu()"></div>
+
+    <!-- Slide-out panel -->
+    <div id="side_menu_panel">
+      <div class="sm-header">
+        <span class="sm-title">&#9776;&nbsp; Menu</span>
+        <button id="sm_close_btn" onclick="closeSideMenu()">&#x2715;</button>
+      </div>
+
+      <!-- Join code -->
+      <div class="sm-section">
         <div id="join_code_banner" onclick="copyJoinCode()">
           <span class="jcb-label">Join&#160;Link:</span>
           <span id="join_code_text"></span>
           <span class="jcb-copy-hint">&#x2398;&#160;Copy</span>
         </div>
-    </span>
-    <div id="progressbar_div" style="display: none">
-      <progress id="progressbar" value="0" max="100">0%</progress>
+        <button class="sm-btn green" onclick="openChatOverlay()">&#x1F4AC; Game Chat</button>
+        <button class="sm-btn" onclick="openVoiceWindow()">&#x1F3A4; Voice Chat</button>
+      </div>
+
+      <!-- Display -->
+      <div class="sm-section">
+        <p class="sm-section-title">Display</p>
+        <div class="sm-row">
+          <label>Resolution</label>
+          <select id="resolution" onchange="fixGeometry()">
+            <option value="high">High Res</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low Res</option>
+          </select>
+        </div>
+        <div class="sm-row">
+          <label>Aspect</label>
+          <select id="aspectRatio" onchange="fixGeometry()">
+            <option value="any">Fit Screen</option>
+            <option value="4:3">4:3</option>
+            <option value="16:9">16:9</option>
+            <option value="5:4">5:4</option>
+            <option value="21:9">21:9</option>
+            <option value="32:9">32:9</option>
+            <option value="1:1">1:1</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tools -->
+      <div class="sm-section">
+        <p class="sm-section-title">Tools</p>
+        <button class="sm-btn" id="console_button" onclick="consoleToggle()">Show Console</button>
+        <button id="vr_toggle_btn" class="sm-btn blue" onclick="window.vrManager && window.vrManager.toggleVR()">VR Mode</button>
+      </div>
+
+      <!-- Friends -->
+      <div id="sm_friends_section" class="sm-section" style="flex:1;display:flex;flex-direction:column;">
+        <p class="sm-section-title">Friends Online</p>
+        <div class="sm-friends-list" id="sm_friends_list">
+          <span class="sm-friends-empty">Loading&#8230;</span>
+        </div>
+      </div>
     </div>
-  </div>
 
-  </div>
-
-  <div class="emscripten" id="canvas_container">
-    <button id="overlay_visor_button" onclick="toggleVisorMode()">Show Visor</button>
-    <button id="overlay_chat_button" onclick="openChatOverlay()">Chat</button>
+    <!-- In-game chat overlay -->
     <div id="chat_overlay">
-      <button id="chat_mode_btn" onclick="toggleChatMode()" title="Switch between Chat mode (opens chat) and Type mode (replaces text in current field)">Chat</button>
+      <button id="chat_mode_btn" onclick="toggleChatMode()" title="Switch between Chat mode and Replace mode">Chat</button>
       <input id="chat_input" type="text" placeholder="Chat message..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       <button id="chat_send_btn" onclick="sendChatMessage()">Send</button>
       <button id="chat_cancel_btn" onclick="closeChatOverlay()">&#x2715;</button>
     </div>
 
-  </div>
+    <div id="progressbar_div" style="display: none">
+      <progress id="progressbar" value="0" max="100">0%</progress>
+    </div>
 
-  <div id="footer">
-    <textarea id="console_output" class="console" rows="8" style="display: none; height: 200px"></textarea>
+    <textarea id="console_output" class="console" rows="8" style="display: none;"></textarea>
+
   </div>
 `;
 
@@ -445,6 +518,100 @@ var chatReplaceMode = false;
 var joinCodeBanner;
 var joinCodeText;
 var joinCodeUrl = null;
+var sideMenuOpen = false;
+
+function toggleSideMenu() {
+    sideMenuOpen ? closeSideMenu() : openSideMenu();
+}
+
+function openSideMenu() {
+    sideMenuOpen = true;
+    const panel    = document.getElementById('side_menu_panel');
+    const backdrop = document.getElementById('side_menu_backdrop');
+    if (panel)    panel.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+    renderSideMenuFriends();
+}
+
+function closeSideMenu() {
+    sideMenuOpen = false;
+    const panel    = document.getElementById('side_menu_panel');
+    const backdrop = document.getElementById('side_menu_backdrop');
+    if (panel)    panel.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+}
+
+function renderSideMenuFriends() {
+    const list = document.getElementById('sm_friends_list');
+    if (!list) return;
+    // Access the friends list from the index.html scope (same window)
+    const friends = (typeof _friendsList !== 'undefined') ? _friendsList : [];
+    const online  = friends.filter(f => f.online);
+    const offline = friends.filter(f => !f.online);
+    const all     = [...online, ...offline];
+    if (all.length === 0) {
+        list.innerHTML = '<span class="sm-friends-empty">No friends yet.</span>';
+        return;
+    }
+    list.innerHTML = '';
+    all.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'sm-friend-row';
+        const canInvite = f.online && joinCodeUrl;
+        div.innerHTML = `
+          <span class="sm-friend-dot ${f.online ? 'online' : ''}"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="sm-friend-name">${_smEsc(f.username)}</div>
+            <div class="sm-friend-status">${f.online ? (f.server_address ? 'Playing' : 'Online') : 'Offline'}</div>
+          </div>
+          <div class="sm-friend-btns">
+            ${canInvite ? `<button class="invite-btn" onclick="smInviteFriend('${_smEsc(f.username)}')">Invite</button>` : ''}
+            <button onclick="smChatFriend('${_smEsc(f.username)}')">Chat</button>
+          </div>`;
+        list.appendChild(div);
+    });
+}
+
+function _smEsc(s) {
+    return String(s).replace(/'/g, "\\'").replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function smInviteFriend(username) {
+    if (!joinCodeUrl || typeof friendsRequest === 'undefined') return;
+    const u = (typeof etherdeckAuth !== 'undefined') ? etherdeckAuth.getUsername() : null;
+    if (!u) return;
+    // Parse address and port from the join URL
+    try {
+        const url = new URL(joinCodeUrl);
+        const addr   = url.searchParams.get('address') || url.hostname;
+        const port   = parseInt(url.searchParams.get('port') || url.port || '30000');
+        await friendsRequest('send_invite', {
+            from_username: u, to_username: username,
+            server_address: addr, server_port: port
+        });
+    } catch (_) {
+        // If it's not a URL, just send the raw string as address
+        await friendsRequest('send_invite', {
+            from_username: u, to_username: username,
+            server_address: joinCodeUrl, server_port: 30000
+        });
+    }
+    // Brief feedback
+    const list = document.getElementById('sm_friends_list');
+    if (list) {
+        const note = document.createElement('div');
+        note.style.cssText = 'font-size:11px;color:#22c55e;padding:4px 0;';
+        note.textContent = `Invite sent to ${username}!`;
+        list.prepend(note);
+        setTimeout(() => note.remove(), 2500);
+    }
+}
+
+function smChatFriend(username) {
+    closeSideMenu();
+    // Open the friend chat using the launcher page's function (same window)
+    if (typeof openFriendChat === 'function') openFriendChat(username);
+}
 
 function setVisorJoinCode(url) {
     joinCodeUrl = url;
@@ -452,6 +619,9 @@ function setVisorJoinCode(url) {
         joinCodeText.textContent = url;
         joinCodeBanner.classList.add('visible');
     }
+    // Show the badge on the floating menu button so the player knows they're hosting
+    const badge = document.getElementById('smb_badge');
+    if (badge) badge.hidden = !url;
 }
 
 function saveWorldNow() {
@@ -569,19 +739,14 @@ function sendChatMessage() {
 
 function setVisorMode(hidden) {
     visorHidden = hidden;
-    document.body.classList.toggle('visor-hidden', hidden);
-    if (visorToggleButton) {
-        visorToggleButton.value = hidden ? 'Show Visor' : 'Hide Visor';
-    }
+    // In the new layout there is no top bar — visor concept maps to the side menu.
+    // Just re-run geometry when called.
     fixGeometry(true);
 }
 
 function toggleVisorMode() {
-    const willHide = !visorHidden;
-    setVisorMode(willHide);
-    if (willHide && document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {});
-    }
+    // In the new layout, toggling the "visor" opens/closes the slide-out side menu.
+    toggleSideMenu();
 }
 
 function isMobileLayout() {
@@ -627,21 +792,14 @@ function clampNativeCanvasSize(width, height) {
 }
 
 function applyLayoutDefaults() {
-    const resolutionSelect = document.getElementById('resolution');
+    const resolutionSelect  = document.getElementById('resolution');
     const aspectRatioSelect = document.getElementById('aspectRatio');
-    const controlsHint = document.getElementById('controls_hint');
-    if (!resolutionSelect || !aspectRatioSelect || !controlsHint) {
-        return;
-    }
+    if (!resolutionSelect || !aspectRatioSelect) return;
 
     if (isMobileLayout()) {
-        resolutionSelect.value = 'high';
+        resolutionSelect.value  = 'high';
         aspectRatioSelect.value = 'any';
-        controlsHint.textContent = 'Canvas size is capped on mobile. Install to home screen for the cleanest layout.';
-        return;
     }
-
-    controlsHint.textContent = 'Full screen: try F11 or Command+Shift+F.';
 }
 
 function nudgeMobileAspectRatioAfterRotation() {
@@ -684,8 +842,6 @@ function activateBody() {
 
     consoleButton = document.getElementById('console_button');
     consoleOutput = document.getElementById('console_output');
-    visorToggleButton = document.getElementById('visor_toggle');
-    overlayVisorButton = document.getElementById('overlay_visor_button');
     chatOverlay = document.getElementById('chat_overlay');
     chatInput = document.getElementById('chat_input');
     chatModeBtn = document.getElementById('chat_mode_btn');
@@ -1084,12 +1240,9 @@ function fixGeometry(override) {
     }
 
     const viewport = getViewportSize();
-    const header = document.getElementById('header');
-    const footer = document.getElementById('footer');
-    const headerHeight = header ? header.offsetHeight : 0;
-    const footerHeight = footer ? footer.offsetHeight : 0;
-    screenX = Math.max(1, viewport.width - 24);
-    screenY = Math.max(1, viewport.height - headerHeight - footerHeight - 24);
+    // No header/footer in the new fullscreen layout — canvas fills the viewport.
+    screenX = Math.max(1, viewport.width);
+    screenY = Math.max(1, viewport.height);
 
     // Size of the viewport (after scaling)
     var realX;
@@ -1482,6 +1635,8 @@ class WebXRManager {
         this._gl            = null;
         this._prevOrient    = null;
         this._xrCalibQuat   = null; // calibration quaternion for absolute orientation
+        this._xrYawOffset   = 0;    // accumulated joystick-turn offset in degrees
+        this._lastXRTime    = null; // for dtime computation in XR frame
         this._gamepadStates = new Map();
         this._deviceOriHandler = null;
         this._gamepadPollId    = null;
@@ -1602,6 +1757,7 @@ class WebXRManager {
             // Escape fallback mode.
             this._inVR = false;
             this._xrCalibQuat = null;
+            this._xrYawOffset = 0;
             this._stopGamepadPoll();
             this._removeDeviceOriListener();
             this._setButtonActive(false);
@@ -1615,6 +1771,7 @@ class WebXRManager {
         this._inVR         = false;
         this._prevOrient   = null;
         this._xrCalibQuat  = null; // reset calibration for next VR session
+        this._xrYawOffset  = 0;
         this._stopGamepadPoll();
         this._removeDeviceOriListener();
         this._setButtonActive(false);
@@ -1627,7 +1784,7 @@ class WebXRManager {
     _setButtonActive(active) {
         const btn = document.getElementById('vr_toggle_btn');
         if (!btn) return;
-        btn.value = active ? 'Exit VR' : 'VR Mode';
+        btn.textContent = active ? 'Exit VR' : 'VR Mode';
         btn.classList.toggle('vr-active', active);
     }
 
@@ -1637,6 +1794,12 @@ class WebXRManager {
         if (!this._session) return;
         this._session.requestAnimationFrame(this._onXRFrame.bind(this));
 
+        // Compute delta-time in seconds for smooth analogue turning.
+        const dtime = this._lastXRTime !== null
+            ? Math.min((time - this._lastXRTime) / 1000, 0.1)
+            : 1 / 72;
+        this._lastXRTime = time;
+
         const gl   = this._getGL();
         const pose = frame.getViewerPose(this._refSpace);
         if (!pose) return;
@@ -1644,8 +1807,8 @@ class WebXRManager {
         // 1. Head-rotation → camera look (always active, even in Y menu)
         this._processHeadPose(pose.transform.orientation);
 
-        // 2. Quest controller input
-        this._processXRInputSources(frame);
+        // 2. Quest/Pico controller input
+        this._processXRInputSources(frame, dtime);
 
         // 3. Y Menu: render black space with floating game screen + menu panel
         if (this._ymenuOpen) {
@@ -1696,29 +1859,46 @@ class WebXRManager {
         }
         const { x: bx, y: by, z: bz, w: bw } = this._xrCalibQuat;
 
-        // Compute q_rel = q_current ⊗ conjugate(q_calib)
-        // This is the rotation FROM the calibration pose TO the current pose,
-        // expressed in world space.
-        //   conjugate(q_calib) = (-bx, -by, -bz, bw)
-        const rqw =  cw*bw + cx*bx + cy*by + cz*bz;
-        const rqx = -cw*bx + cx*bw - cy*bz + cz*by;
-        const rqy = -cw*by + cx*bz + cy*bw - cz*bx;
-        const rqz = -cw*bz - cx*by + cy*bx + cz*bw;
+        // Rotate the forward vector (0,0,-1) by q_current into world space,
+        // and separately by q_calib into world space, then compare.
+        // This keeps pitch purely world-relative (elevation above horizontal)
+        // so it is never affected by yaw frame, joystick turns, or gimbal lock.
+        //
+        // rotate_fwd(q) = q * (0,0,-1) * conj(q)
+        // Using the sandwich formula shortcut for v=(0,0,-1):
+        //   t = 2 * cross(q.xyz, v)  →  cross((qx,qy,qz),(0,0,-1)) = (-qy, qx, 0)
+        //   t = (-2*qy, 2*qx, 0)
+        //   result = v + qw*t + cross(q.xyz, t)
+        const rot_fwd = (qx, qy, qz, qw) => {
+            const tx = -2*qy, ty = 2*qx; // tz=0
+            return {
+                x:      qw*tx + (qy*0  - qz*ty),
+                y:      qw*ty + (qz*tx - qx*0 ),
+                z: -1 +         (qx*ty - qy*tx),
+            };
+        };
 
-        // Extract yaw (Y-axis, right = positive) and pitch (X-axis, up = positive)
-        // from q_rel using standard Tait-Bryan decomposition.
-        // Because this is an absolute value (not a delta), the atan2/asin formulas
-        // are numerically stable at all orientations Minetest permits (pitch ≤ 90°).
-        const yaw_rel   = Math.atan2(2*(rqw*rqy + rqx*rqz), 1 - 2*(rqy*rqy + rqz*rqz));
-        const sinp      = Math.max(-1, Math.min(1, 2*(rqw*rqx - rqz*rqy)));
-        const pitch_rel = Math.asin(sinp);
+        const fwd     = rot_fwd(cx, cy, cz, cw);  // current   forward in world
+        const fwd_cal = rot_fwd(bx, by, bz, bw);  // calib     forward in world
+
+        // Pitch = world-space elevation of the current forward vector.
+        // Completely independent of yaw; never affected by joystick turns.
+        const pitch_rel = Math.asin(Math.max(-1, Math.min(1, fwd.y)));
+
+        // Yaw = world-space azimuth difference between current and calibration.
+        // _xrYawOffset (joystick turns, degrees) is added in the same frame.
+        const yaw_world     = Math.atan2(fwd.x,     -fwd.z);
+        const yaw_world_cal = Math.atan2(fwd_cal.x, -fwd_cal.z);
+        // Negate: in Minetest, camera_yaw decreasing = turning right.
+        // Turning head right → yaw_world increases → we need xr_yaw to decrease.
+        const yaw_rel       = yaw_world_cal - yaw_world;
 
         // Convert to degrees and push directly into the engine's camera.
-        // The engine adds these to the cam orientation captured at VR start,
-        // resulting in zero drift regardless of how the player moves.
+        // _xrYawOffset accumulates joystick smooth-turn; adding it here keeps
+        // pitch completely unaffected by joystick turns.
         if (webxr_set_look) {
             const RAD2DEG = 180 / Math.PI;
-            webxr_set_look(yaw_rel * RAD2DEG, pitch_rel * RAD2DEG);
+            webxr_set_look(yaw_rel * RAD2DEG + this._xrYawOffset, pitch_rel * RAD2DEG);
         }
     }
 
@@ -1744,10 +1924,10 @@ class WebXRManager {
 
     // ── XR controller input (immersive session) ───────────────────────────────
 
-    _processXRInputSources(frame) {
+    _processXRInputSources(frame, dtime) {
         for (const src of this._session.inputSources) {
             if (!src.gamepad) continue;
-            this._handleControllerInput(src.gamepad, src.handedness);
+            this._handleControllerInput(src.gamepad, src.handedness, dtime);
         }
     }
 
@@ -1833,7 +2013,7 @@ class WebXRManager {
     //   axes[0,1] = touchpad (or unused)
     //   axes[2,3] = thumbstick X,Y
 
-    _handleControllerInput(gp, handedness) {
+    _handleControllerInput(gp, handedness, dtime = 1/72) {
         const key  = handedness + ':' + (gp.index != null ? gp.index : 'x');
         const prev = this._gamepadStates.get(key) || { buttons: [], axes: [] };
         const btns = gp.buttons;
@@ -1863,13 +2043,21 @@ class WebXRManager {
                 this._btnToMouse(isDown(1), wasDown(1), 2);
                 this._btnToKey  (isDown(4), wasDown(4), 'q', 'KeyQ', 81);
                 this._btnToKey  (isDown(5), wasDown(5), 't', 'KeyT', 84);
+                // Right stick → smooth turn in normal gameplay
                 const rsx = ax(2, 0);
+                this._stickToTurn(rsx, dtime);
+            }
+        } else {
+            // Y menu open:
+            // Y button (left btn 5) closes the menu
+            if (handedness === 'left' && isDown(5) && !wasDown(5)) this._toggleYMenu();
+            // Right stick → hotbar scroll (useful when browsing items
+            // while inventory or game screen is visible in the Y menu)
+            if (handedness === 'right') {
+                const rsx  = ax(2, 0);
                 const prsx = prev.axes[2] != null ? prev.axes[2] : (prev.axes[0] || 0);
                 this._stickToHotbar(rsx, prsx);
             }
-        } else {
-            // Y menu open: only Y button (left btn 5) can close it
-            if (handedness === 'left' && isDown(5) && !wasDown(5)) this._toggleYMenu();
         }
 
         this._gamepadStates.set(key, {
@@ -1884,6 +2072,26 @@ class WebXRManager {
         this._btnToKey(y >  D, py >  D, 's', 'KeyS', 83);
         this._btnToKey(x < -D, px < -D, 'a', 'KeyA', 65);
         this._btnToKey(x >  D, px >  D, 'd', 'KeyD', 68);
+    }
+
+    // Smooth turn: rotates the calibration quaternion around world-Y so that
+    // the player's forward direction shifts, giving a VR-safe smooth turn.
+    // Speed is 120°/s at full deflection; deadzone = 0.25.
+    _stickToTurn(x, dtime) {
+        const D = 0.25;
+        if (Math.abs(x) <= D) return;
+        const SPEED = 120; // degrees per second at full stick
+        const normalised = (Math.abs(x) - D) / (1.0 - D);
+        const deltaDeg = Math.sign(x) * normalised * SPEED * dtime;
+        this._rotateCalibration(deltaDeg);
+    }
+
+    // Accumulates a yaw offset (in degrees) for joystick smooth-turn.
+    // Using a scalar offset instead of mutating the calibration quaternion
+    // ensures pitch is never affected by turning.
+    // Right stick x > 0 → deltaDeg > 0 → xr_yaw decreases → turns right.
+    _rotateCalibration(deltaDeg) {
+        this._xrYawOffset -= deltaDeg;
     }
 
     _stickToHotbar(x, px) {

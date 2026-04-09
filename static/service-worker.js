@@ -1,15 +1,20 @@
 const CACHE_NAME = 'bloxel-shell-%__RELEASE_UUID__%';
+// index.html, launcher.js, and servers.json are intentionally excluded from
+// the pre-cache so the browser always fetches the latest version.
 const APP_SHELL = [
-  './',
-  './index.html',
   './app.webmanifest',
   './apple-touch-icon.png',
   './icon-192.png',
   './icon-512.png',
   './icon.svg',
   './icon-maskable.svg',
-  './%__RELEASE_UUID__%/launcher.js',
   './%__RELEASE_UUID__%/worker.js'
+];
+// These paths are always fetched fresh from the network (no cache read/write).
+const NEVER_CACHE = [
+  'index.html',
+  'launcher.js',
+  'servers.json',
 ];
 
 self.addEventListener('install', (event) => {
@@ -38,6 +43,13 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Always fetch these fresh — never serve from cache
+  const pathname = url.pathname;
+  if (NEVER_CACHE.some(n => pathname.endsWith('/' + n) || pathname.endsWith(n))) {
+    event.respondWith(fetch(request).catch(() => new Response('Offline', { status: 503 })));
     return;
   }
 

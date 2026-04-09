@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-        <meta name="theme-color" content="#120730">
+        <meta name="theme-color" content="#f5f7fc">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,348 +14,1089 @@
         <link rel="icon" type="image/svg+xml" href="icon.svg">
         <link rel="apple-touch-icon" href="apple-touch-icon.png">
         <style>
+            @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+            /* ===== THEMES ===== */
             :root {
-                color-scheme: dark;
-                --surface: rgba(12, 8, 28, 0.9);
-                --surface-strong: rgba(18, 12, 40, 0.96);
-                --surface-border: rgba(139, 92, 246, 0.35);
-                --text: #f0eafa;
-                --muted: #b8a9d9;
-                --accent: #8b5cf6;
-                --accent-strong: #7c3aed;
+                --bg:            #e8eaf0;
+                --sidebar-bg:    #ffffff;
+                --sidebar-top:   #f5f7fc;
+                --sidebar-bot:   #e8edf5;
+                --panel-bg:      #ffffff;
+                --panel-border:  rgba(0,0,0,0.08);
+                --text:          #1a1a2e;
+                --muted:         #5c6a8a;
+                --subtle:        #f0f2f8;
+                --accent:        #00c070;
+                --accent-hov:    #00a05e;
+                --accent2:       #1565c0;
+                --accent2-hov:   #0d47a1;
+                --sidebar-text:  #1a1a2e;
+                --sidebar-muted: rgba(26,26,46,0.45);
+                --sidebar-w:     245px;
+                --wii-shine:     rgba(255,255,255,0.80);
+                --wii-shine2:    rgba(255,255,255,0.45);
+                color-scheme: light dark;
             }
 
-            * {
-                box-sizing: border-box;
+            [data-theme="dark"] {
+                --bg:            #0f1117;
+                --sidebar-bg:    #0d1226;
+                --sidebar-top:   #131b35;
+                --sidebar-bot:   #080d1a;
+                --panel-bg:      #1a1f2e;
+                --panel-border:  rgba(255,255,255,0.07);
+                --text:          #e8eeff;
+                --muted:         #8896b8;
+                --subtle:        #1e2438;
+                --accent:        #00c070;
+                --accent-hov:    #00a05e;
+                --accent2:       #3d7ef5;
+                --accent2-hov:   #2563eb;
+                --sidebar-muted: rgba(232,238,255,0.55);
+                --wii-shine:     rgba(255,255,255,0.12);
+                --wii-shine2:    rgba(255,255,255,0.04);
             }
 
-            html {
-                background: #040608;
-            }
+            * { box-sizing: border-box; }
+
+            html { background: var(--bg); }
 
             body {
                 margin: 0;
                 min-height: 100svh;
-                padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-                background:
-                    radial-gradient(circle at top, rgba(109, 40, 217, 0.28), transparent 48%),
-                    linear-gradient(180deg, #0c0820 0%, #07050f 58%, #040608 100%);
+                background: var(--bg);
                 color: var(--text);
-                font-family: Verdana, Geneva, sans-serif;
+                font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+                display: flex;
             }
 
-            .landing-shell {
-                width: min(100%, 960px);
+            /* ===== SIDEBAR ===== */
+            .sidebar {
+                width: var(--sidebar-w);
+                flex-shrink: 0;
+                height: 100svh;
+                position: sticky;
+                top: 0;
+                background: linear-gradient(180deg, var(--sidebar-top) 0%, var(--sidebar-bg) 55%, var(--sidebar-bot) 100%);
+                display: flex;
+                flex-direction: column;
+                z-index: 200;
+                overflow-y: auto;
+                overflow-x: hidden;
+                box-shadow: 3px 0 20px rgba(0,0,0,0.10), 1px 0 0 rgba(0,0,0,0.06);
+                /* Wii gloss overlay */
+                position: sticky;
+            }
+
+            /* Wii top-gloss sheen on sidebar */
+            .sidebar::before {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 52%;
+                background: linear-gradient(180deg, var(--wii-shine) 0%, transparent 100%);
+                border-radius: 0;
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            .sb-brand {
+                position: relative;
+                z-index: 2;
+                display: flex;
+                align-items: center;
+                gap: 11px;
+                padding: 20px 16px 16px;
+                border-bottom: 1px solid rgba(0,0,0,0.08);
+                flex-shrink: 0;
+            }
+
+            .sb-logo {
+                width: 36px; height: 36px;
+                flex-shrink: 0;
+                filter: drop-shadow(0 1px 4px rgba(0,0,0,0.12));
+            }
+
+            .sb-name {
+                font-size: 1.25rem;
+                font-weight: 900;
+                color: var(--text);
+                letter-spacing: 0.03em;
+            }
+
+            .sb-nav {
+                flex: 1;
+                padding: 12px 8px;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                position: relative;
+                z-index: 2;
+            }
+
+            /* Wii-style nav item */
+            .sb-item {
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                padding: 11px 14px;
+                border-radius: 12px;
+                border: none;
+                background: transparent;
+                color: var(--sidebar-muted);
+                font-size: 0.93rem;
+                font-weight: 700;
+                font-family: inherit;
+                cursor: pointer;
+                text-align: left;
+                transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+                width: 100%;
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* Wii channel gloss on hover/active */
+            .sb-item::after {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 50%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%);
+                border-radius: 12px 12px 0 0;
+                opacity: 0;
+                transition: opacity 0.15s;
+                pointer-events: none;
+            }
+
+            .sb-item:hover {
+                background: rgba(0,0,0,0.06);
+                color: var(--text);
+            }
+
+            .sb-item:hover::after { opacity: 1; }
+
+            .tab-btn.active.sb-item {
+                background: linear-gradient(180deg, rgba(21,101,192,0.12) 0%, rgba(21,101,192,0.06) 100%);
+                color: var(--accent2);
+                box-shadow: 0 2px 12px rgba(21,101,192,0.16), inset 0 1px 0 rgba(255,255,255,0.80);
+                border: 1px solid rgba(21,101,192,0.20);
+            }
+
+            .tab-btn.active.sb-item::after { opacity: 1; }
+
+            .sb-icon {
+                width: 22px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 1.05rem;
+                flex-shrink: 0;
+                flex-shrink: 0;
+            }
+
+            .sb-bottom {
+                padding: 10px 8px 14px;
+                border-top: 1px solid rgba(0,0,0,0.08);
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                flex-shrink: 0;
+                position: relative;
+                z-index: 2;
+            }
+
+            .sb-theme-btn { justify-content: flex-start; }
+
+            /* Wii-style sign-in button (green, glossy) */
+            .signin-btn {
+                display: flex !important;
+                align-items: center !important;
+                gap: 13px !important;
+                padding: 11px 14px !important;
+                border-radius: 12px !important;
+                border: 1px solid rgba(255,255,255,0.18) !important;
+                background: linear-gradient(180deg, #22c070 0%, #00934d 100%) !important;
+                color: #ffffff !important;
+                font-size: 0.93rem !important;
+                font-weight: 800 !important;
+                font-family: inherit !important;
+                cursor: pointer !important;
+                width: 100% !important;
+                min-height: unset !important;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+                text-align: left !important;
+                transition: filter 0.15s !important;
+                position: relative !important;
+                overflow: hidden !important;
+            }
+
+            .signin-btn::after {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 50%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.30) 0%, transparent 100%);
+                border-radius: 12px 12px 0 0;
+                pointer-events: none;
+            }
+
+            .signin-btn:hover { filter: brightness(1.10) !important; }
+
+            /* ===== APP LAYOUT ===== */
+            .app-layout {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .rb-banner {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 10px 24px;
+                background: var(--subtle);
+                border-bottom: 1px solid var(--panel-border);
+                font-size: 0.9rem;
+                flex-wrap: wrap;
+                flex-shrink: 0;
+            }
+
+            .rb-debug-console {
+                background: #0a0e1a;
+                color: #a8bfff;
+                padding: 10px 18px;
+                font-size: 0.78rem;
+                font-family: "Lucida Console", Monaco, monospace;
+                border-bottom: 1px solid var(--panel-border);
+            }
+
+            .rb-debug-console pre {
+                margin: 0;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+
+            .rb-page {
+                flex: 1;
+                padding: 30px 36px;
+                max-width: 1120px;
+                width: 100%;
                 margin: 0 auto;
             }
 
-            .hero {
-                margin-bottom: 20px;
+            /* ===== TAB PANELS ===== */
+            .tab-panel { display: none; }
+            .tab-panel.active { display: block; }
+
+            /* ===== PAGE TITLE ===== */
+            .rb-page-title {
+                font-size: 1.65rem;
+                font-weight: 900;
+                margin: 0 0 24px;
+                color: var(--text);
             }
 
-            .hero h1 {
-                margin: 0 0 8px;
-                font-size: clamp(2rem, 6vw, 3.4rem);
-                line-height: 0.95;
-                letter-spacing: 0.02em;
-            }
-
-            .hero p {
-                max-width: 52rem;
-                margin: 0;
-                color: var(--muted);
-                line-height: 1.5;
-            }
-
+            /* ===== WII-STYLE PANELS ===== */
             .panel {
-                background: var(--surface);
-                border: 1px solid var(--surface-border);
-                border-radius: 20px;
-                padding: 18px;
-                box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
-                backdrop-filter: blur(10px);
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 4px 18px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
+                position: relative;
+                overflow: hidden;
             }
 
-            .panel + .panel {
-                margin-top: 16px;
+            /* Wii top-gloss on every panel */
+            .panel::before {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 46%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.60) 0%, transparent 100%);
+                border-radius: 16px 16px 0 0;
+                pointer-events: none;
             }
 
-            .install-panel {
-                display: flex;
-                gap: 16px;
-                align-items: center;
-                justify-content: space-between;
+            [data-theme="dark"] .panel::before {
+                background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
             }
 
-            .install-panel strong,
+            .panel + .panel { margin-top: 14px; }
+
+            .section { display: grid; gap: 14px; position: relative; z-index: 1; }
+
             .section-title {
                 display: block;
-                margin-bottom: 6px;
-                font-size: 1.05rem;
+                font-size: 1rem;
+                font-weight: 900;
+                color: var(--text);
+                margin-bottom: 3px;
             }
 
-            .install-panel p,
-            .compat-note p,
-            .field-note,
             .section-copy {
                 margin: 0;
                 color: var(--muted);
-                line-height: 1.45;
+                line-height: 1.5;
+                font-size: 0.88rem;
             }
 
-            .stack {
-                display: grid;
-                gap: 16px;
-            }
-
-            .section {
-                display: grid;
-                gap: 14px;
-            }
+            .compat-note { border-style: dashed; }
 
             .fields {
                 display: grid;
-                gap: 14px;
-                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 12px;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             }
 
-            .field {
-                display: grid;
-                gap: 8px;
-            }
+            .field { display: grid; gap: 7px; position: relative; z-index: 1; }
 
             .field label {
-                font-weight: 700;
-            }
-
-            .inline-control {
-                display: flex;
-                gap: 8px;
-            }
-
-            .inline-control select,
-            .inline-control input {
-                flex: 1;
-            }
-
-            .inline-control button {
-                width: auto;
-                min-height: 52px;
-                padding: 0 14px;
-                flex: 0 0 auto;
-            }
-
-            .field input,
-            .field select,
-            .field button,
-            #join_launch,
-            #launch,
-            #launch_server,
-            #install_app {
-                width: 100%;
-                min-height: 52px;
-                border-radius: 14px;
-                border: 1px solid rgba(139, 92, 246, 0.24);
-                padding: 0 14px;
-                font-size: 1rem;
-                color: var(--text);
-                background: var(--surface-strong);
+                font-size: 0.78rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.07em;
+                color: var(--muted);
             }
 
             .field input,
             .field select {
+                padding: 10px 13px;
+                border-radius: 10px;
+                border: 1.5px solid var(--panel-border);
+                background: var(--subtle);
+                color: var(--text);
+                font-size: 0.95rem;
+                font-family: inherit;
+                font-weight: 600;
+                outline: none;
+                transition: border-color 0.15s, box-shadow 0.15s;
                 appearance: none;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
             }
 
-            button,
-            #join_launch,
-            #launch,
-            #launch_server,
-            #install_app {
+            .field input:focus,
+            .field select:focus {
+                border-color: var(--accent2);
+                box-shadow: 0 0 0 3px rgba(21,101,192,0.14), inset 0 1px 3px rgba(0,0,0,0.05);
+            }
+
+            /* ===== WII-STYLE BUTTONS ===== */
+            button {
                 cursor: pointer;
-                border-color: rgba(139, 92, 246, 0.6);
-                background: linear-gradient(180deg, var(--accent), var(--accent-strong));
-                color: #f0eafa;
+                border: 1px solid rgba(255,255,255,0.20);
+                border-radius: 12px;
+                background: linear-gradient(180deg, #2176e8 0%, #1151b8 100%);
+                color: #ffffff;
                 font-weight: 800;
+                font-family: inherit;
+                font-size: 0.95rem;
+                min-height: 42px;
+                padding: 0 22px;
+                transition: filter 0.15s;
+                letter-spacing: 0.01em;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.40);
+                position: relative;
+                overflow: hidden;
             }
 
-            button:disabled,
-            #install_app:disabled {
-                cursor: default;
-                opacity: 0.65;
+            /* Wii gloss on every button */
+            button::after {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 50%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.38) 0%, transparent 100%);
+                border-radius: 12px 12px 0 0;
+                pointer-events: none;
             }
+
+            button:hover:not(:disabled) { filter: brightness(1.12); }
+            button:active:not(:disabled) { filter: brightness(0.94); box-shadow: 0 1px 4px rgba(0,0,0,0.20); }
+            button:disabled { opacity: 0.5; cursor: default; }
+
+            .btn-secondary {
+                background: linear-gradient(180deg, #ffffff 0%, #e8ecf5 100%) !important;
+                color: var(--muted) !important;
+                border: 1.5px solid var(--panel-border) !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+            }
+
+            [data-theme="dark"] .btn-secondary {
+                background: linear-gradient(180deg, #2a3050 0%, #1e2438 100%) !important;
+                color: var(--muted) !important;
+                border-color: rgba(255,255,255,0.10) !important;
+            }
+
+            .btn-secondary:hover:not(:disabled) { filter: brightness(1.06) !important; }
+
+            .actions { display: flex; gap: 10px; flex-wrap: wrap; position: relative; z-index: 1; }
+            .actions > * { flex: 1 1 130px; }
 
             hr {
-                border: 0;
-                border-top: 1px solid rgba(139, 92, 246, 0.18);
+                border: none;
+                border-top: 1px solid var(--panel-border);
                 margin: 4px 0;
             }
 
-            .actions {
+            /* ===== PLAY TAB ===== */
+            .play-hero {
                 display: flex;
-                gap: 12px;
+                gap: 32px;
+                align-items: flex-start;
                 flex-wrap: wrap;
             }
 
-            .actions > * {
-                flex: 1 1 240px;
-            }
+            .play-hero-info { flex: 1 1 240px; }
 
-            .compat-note {
-                border-style: dashed;
-            }
-
-            /* ===== Tabs ===== */
-            .tab-bar {
-                display: flex;
-                gap: 4px;
-                background: rgba(255, 255, 255, 0.04);
-                border: 1px solid var(--surface-border);
-                border-radius: 16px;
-                padding: 5px;
-            }
-
-            .tab-btn {
-                flex: 1;
-                min-height: 42px;
-                border: none;
-                border-radius: 12px;
-                background: transparent;
-                color: var(--muted);
-                font-size: 0.92rem;
-                font-weight: 700;
-                cursor: pointer;
-                transition: background 0.15s, color 0.15s;
-                padding: 0 10px;
-            }
-
-            .tab-btn:hover {
-                background: rgba(139, 92, 246, 0.12);
+            .play-hero-title {
+                font-size: 2rem;
+                font-weight: 900;
                 color: var(--text);
+                margin: 0 0 10px;
+                letter-spacing: 0.01em;
             }
 
-            .tab-btn.active {
-                background: linear-gradient(180deg, var(--accent), var(--accent-strong));
-                color: #f0eafa;
-                box-shadow: 0 2px 10px rgba(124, 58, 237, 0.35);
+            .play-hero-sub {
+                color: var(--muted);
+                margin: 0;
+                font-size: 0.92rem;
+                line-height: 1.55;
             }
 
-            .tab-panel {
-                display: none;
+            .play-form-card {
+                flex: 0 0 280px;
             }
 
-            .tab-panel.active {
-                display: grid;
-                gap: 16px;
-            }
-            /* ================ */
-
-            /* ===== Game Settings ===== */
-            .settings-group {
-                display: grid;
-                gap: 14px;
+            /* Green Wii-style launch button */
+            .wii-launch-btn {
+                width: 100%;
+                background: linear-gradient(180deg, #22d472 0%, #00934d 100%) !important;
+                border-color: rgba(0,0,0,0.08) !important;
+                font-size: 1rem !important;
+                min-height: 44px !important;
+                box-shadow: 0 4px 14px rgba(0,147,77,0.28), inset 0 1px 0 rgba(255,255,255,0.45) !important;
             }
 
-            .settings-group-title {
+            .wii-launch-btn:hover:not(:disabled) { filter: brightness(1.10) !important; }
+
+            /* ===== DISCOVER TAB ===== */
+            .rb-discover-page { display: grid; gap: 28px; }
+
+            .rb-discover-top {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+
+            .rb-name-field {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-left: auto;
+            }
+
+            .rb-name-field label {
                 font-size: 0.78rem;
                 font-weight: 800;
                 text-transform: uppercase;
-                letter-spacing: 0.1em;
-                color: var(--accent);
-                margin: 0 0 2px;
-                padding-bottom: 6px;
-                border-bottom: 1px solid rgba(139,92,246,0.18);
-            }
-
-            .setting-row {
-                display: flex;
-                align-items: flex-start;
-                gap: 12px;
-                justify-content: space-between;
-            }
-
-            .setting-label-wrap {
-                flex: 1 1 auto;
-                min-width: 0;
-            }
-
-            .setting-label {
-                font-size: 0.88rem;
-                font-weight: 700;
-                color: var(--text);
-                display: block;
-            }
-
-            .setting-desc {
-                font-size: 0.76rem;
+                letter-spacing: 0.06em;
                 color: var(--muted);
-                margin-top: 2px;
-                line-height: 1.4;
+                white-space: nowrap;
             }
 
-            .setting-control {
-                flex: 0 0 auto;
+            .rb-name-field input {
+                padding: 9px 13px;
+                border-radius: 10px;
+                border: 1.5px solid var(--panel-border);
+                background: var(--panel-bg);
+                color: var(--text);
+                font-size: 0.9rem;
+                font-family: inherit;
+                font-weight: 600;
+                outline: none;
+                width: 170px;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            }
+
+            .rb-name-field input:focus { border-color: var(--accent2); }
+
+            .rb-section { display: grid; gap: 16px; }
+
+            .rb-section-heading {
+                font-size: 1.12rem;
+                font-weight: 900;
+                margin: 0;
+                color: var(--text);
+            }
+
+            .rb-join-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+            .rb-join-row input {
+                flex: 1 1 200px;
+                padding: 10px 14px;
+                border-radius: 10px;
+                border: 1.5px solid var(--panel-border);
+                background: var(--panel-bg);
+                color: var(--text);
+                font-size: 0.95rem;
+                font-family: inherit;
+                font-weight: 600;
+                outline: none;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            }
+
+            .rb-join-row input:focus {
+                border-color: var(--accent2);
+                box-shadow: 0 0 0 3px rgba(21,101,192,0.12);
+            }
+
+            .rb-join-row button { flex: 0 0 80px; }
+
+            /* SERVER GRID — Wii channel tiles */
+            .server-grid {
+                display: grid;
+                gap: 16px;
+                grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+            }
+
+            .server-card {
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                border-radius: 16px;
+                overflow: hidden;
                 display: flex;
+                flex-direction: column;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
+                transition: box-shadow 0.18s, transform 0.18s;
+                position: relative;
+            }
+
+            /* Wii gloss on cards */
+            .server-card::before {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 44%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.50) 0%, transparent 100%);
+                z-index: 1;
+                pointer-events: none;
+            }
+
+            [data-theme="dark"] .server-card::before {
+                background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+            }
+
+            .server-card:hover {
+                box-shadow: 0 10px 28px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.85);
+                transform: translateY(-3px);
+            }
+
+            .server-card-image {
+                height: 130px;
+                background: #c8d0e8;
+                background-size: cover;
+                background-position: center;
+                position: relative;
+                z-index: 0;
+            }
+
+            [data-theme="dark"] .server-card-image { background: #1e2438; }
+
+            .server-card-body {
+                padding: 14px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                flex: 1;
+                position: relative;
+                z-index: 2;
+            }
+
+            .server-card-name  { font-size: 1rem; font-weight: 800; margin: 0; color: var(--text); }
+            .server-card-motd  { font-size: 0.8rem; color: var(--muted); font-style: italic; margin: 0; }
+            .server-card-desc  { font-size: 0.82rem; color: var(--muted); margin: 0; flex: 1; line-height: 1.4; }
+
+            .server-card-footer {
+                display: flex;
+                justify-content: space-between;
                 align-items: center;
+                margin-top: 10px;
                 gap: 8px;
             }
 
-            .setting-control input[type="range"] {
-                width: 110px;
-                accent-color: var(--accent);
+            .server-card-players { font-size: 0.78rem; color: var(--muted); font-weight: 700; }
+
+            .server-card-footer button {
+                min-height: 32px;
+                padding: 0 14px;
+                font-size: 0.83rem;
+                border-radius: 9px;
+                flex: 0 0 auto;
+                background: linear-gradient(180deg, #22d472 0%, #00934d 100%);
             }
+
+            .server-card.color-red    .server-card-image { border-top: 3px solid #ef4444; }
+            .server-card.color-blue   .server-card-image { border-top: 3px solid #3b82f6; }
+            .server-card.color-yellow .server-card-image { border-top: 3px solid #eab308; }
+            .server-card.color-green  .server-card-image { border-top: 3px solid var(--accent); }
+
+            /* ===== SETTINGS TAB ===== */
+            .rb-settings-page { display: grid; gap: 16px; }
+
+            .settings-group { display: grid; gap: 12px; }
+
+            .settings-group-title {
+                font-size: 0.78rem;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 0.10em;
+                color: var(--accent2);
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--panel-border);
+                margin: 0;
+            }
+
+            .setting-row { display: flex; align-items: flex-start; gap: 12px; justify-content: space-between; position: relative; z-index: 1; }
+            .setting-label-wrap { flex: 1 1 auto; min-width: 0; }
+            .setting-label { font-size: 0.88rem; font-weight: 700; color: var(--text); display: block; }
+            .setting-desc  { font-size: 0.76rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+            .setting-control { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+
+            .setting-control input[type="range"] { width: 110px; accent-color: var(--accent2); }
 
             .setting-control input[type="number"],
             .setting-control input[type="text"] {
-                width: 90px;
-                min-height: 34px;
+                width: 90px; min-height: 32px;
                 border-radius: 8px;
-                border: 1px solid rgba(139,92,246,0.3);
-                background: var(--surface-strong);
+                border: 1.5px solid var(--panel-border);
+                background: var(--subtle);
                 color: var(--text);
                 padding: 0 8px;
                 font-size: 0.85rem;
+                font-family: inherit; outline: none;
             }
 
             .setting-control select {
-                min-height: 34px;
+                min-height: 32px;
                 border-radius: 8px;
-                border: 1px solid rgba(139,92,246,0.3);
-                background: var(--surface-strong);
+                border: 1.5px solid var(--panel-border);
+                background: var(--subtle);
                 color: var(--text);
                 padding: 0 8px;
                 font-size: 0.85rem;
                 appearance: none;
+                font-family: inherit; outline: none;
             }
 
             .setting-control input[type="checkbox"] {
-                width: 20px;
-                height: 20px;
-                accent-color: var(--accent);
-                cursor: pointer;
+                width: 18px; height: 18px;
+                accent-color: var(--accent2);
+                cursor: pointer; flex-shrink: 0;
+            }
+
+            .setting-range-val { font-size: 0.8rem; color: var(--muted); min-width: 36px; text-align: right; font-weight: 700; }
+
+            .settings-reset-btn {
+                min-height: 34px !important;
+                padding: 0 16px !important;
+                font-size: 0.85rem !important;
+                border-radius: 9px !important;
+                background: linear-gradient(180deg, #ffffff 0%, #e8ecf5 100%) !important;
+                border: 1.5px solid var(--panel-border) !important;
+                color: var(--muted) !important;
+                font-weight: 700 !important;
+                width: auto !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+            }
+
+            [data-theme="dark"] .settings-reset-btn {
+                background: linear-gradient(180deg, #2a3050 0%, #1e2438 100%) !important;
+            }
+
+            /* ===== ACCOUNT PAGE ===== */
+            .account-page {
+                padding: 28px 24px;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+                max-width: 900px;
+                margin: 0 auto;
+                width: 100%;
+            }
+
+            .account-page h1 {
+                margin: 0 0 4px;
+                font-size: 1.6rem;
+                font-weight: 900;
+                color: var(--text);
+            }
+
+            .account-page .account-sub {
+                color: var(--muted);
+                font-size: 0.93rem;
+                margin: 0;
+            }
+
+            /* ===== FRIENDS TAB ===== */
+            .friends-page { display: flex; flex-direction: column; gap: 16px; padding: 20px 18px; max-width: 700px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+            .friends-page h1 { margin: 0; font-size: 1.5rem; font-weight: 900; color: var(--text); }
+            .friends-page .friends-sub { margin: 0; color: var(--muted); font-size: 0.9rem; }
+            .friends-add-row { display: flex; gap: 8px; }
+            .friends-add-row input { flex: 1; min-height: 38px; border-radius: 10px; border: 1.5px solid var(--panel-border); background: var(--subtle); color: var(--text); padding: 0 12px; font-size: 0.9rem; font-family: inherit; outline: none; }
+            .friends-add-row button { min-height: 38px; padding: 0 18px; border-radius: 10px; font-size: 0.88rem; font-weight: 800; }
+            .friends-section-title { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.10em; color: var(--accent2); margin: 0 0 8px; }
+            .friends-list { display: flex; flex-direction: column; gap: 6px; }
+            .friend-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; background: var(--panel); border: 1px solid var(--panel-border); cursor: pointer; transition: background 0.15s; }
+            .friend-row:hover { background: var(--subtle); }
+            .friend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: var(--muted); }
+            .friend-dot.online { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+            .friend-name { flex: 1; font-weight: 700; font-size: 0.92rem; color: var(--text); }
+            .friend-status { font-size: 0.78rem; color: var(--muted); }
+            .friend-actions { display: flex; gap: 6px; flex-shrink: 0; }
+            .friend-actions button { min-height: 30px; padding: 0 12px; font-size: 0.8rem; font-weight: 700; border-radius: 8px; cursor: pointer; }
+            .friend-btn-chat { background: var(--subtle); border: 1px solid var(--panel-border); color: var(--text); }
+            .friend-btn-remove { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+            .friend-btn-accept { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
+            .friend-btn-decline { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+            .friends-empty { color: var(--muted); font-size: 0.88rem; font-style: italic; padding: 8px 0; }
+            /* Friend chat panel */
+            .friend-chat-overlay { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.35); align-items: flex-end; justify-content: flex-end; padding: 0; pointer-events: none; }
+            .friend-chat-overlay.open { display: flex; pointer-events: auto; }
+            .friend-chat-panel { width: min(400px, 100%); height: min(520px, 80vh); background: var(--panel); border: 1px solid var(--panel-border); border-radius: 18px 18px 0 0; display: flex; flex-direction: column; overflow: hidden; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32,0.72,0,1); }
+            .friend-chat-overlay.open .friend-chat-panel { transform: translateY(0); }
+            .friend-chat-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--panel-border); flex-shrink: 0; }
+            .friend-chat-title { flex: 1; font-weight: 800; font-size: 0.95rem; color: var(--text); }
+            .friend-chat-close { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1; }
+            .friend-chat-msgs { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+            .chat-msg { max-width: 78%; word-break: break-word; padding: 8px 12px; border-radius: 14px; font-size: 0.88rem; line-height: 1.45; }
+            .chat-msg.mine { align-self: flex-end; background: var(--accent2); color: #fff; border-bottom-right-radius: 4px; }
+            .chat-msg.theirs { align-self: flex-start; background: var(--subtle); color: var(--text); border-bottom-left-radius: 4px; }
+            .chat-msg-time { font-size: 0.7rem; color: rgba(255,255,255,0.6); margin-top: 2px; text-align: right; }
+            .chat-msg.theirs .chat-msg-time { color: var(--muted); }
+            .friend-chat-input-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--panel-border); flex-shrink: 0; }
+            .friend-chat-input-row input { flex: 1; min-height: 38px; border-radius: 10px; border: 1.5px solid var(--panel-border); background: var(--subtle); color: var(--text); padding: 0 12px; font-size: 0.9rem; font-family: inherit; outline: none; }
+            .friend-chat-input-row button { min-height: 38px; padding: 0 16px; font-size: 0.88rem; font-weight: 800; border-radius: 10px; }
+            /* Invite banner */
+            .invite-banner { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.3); }
+            .invite-banner-text { flex: 1; font-size: 0.88rem; color: var(--text); }
+            .invite-banner-text strong { color: #22c55e; }
+
+            /* ===== FULLSCREEN AUTH + EMAIL PROMPT ===== */
+            .auth-screen {
+                position: fixed;
+                inset: 0;
+                z-index: 10000;
+                background: var(--bg);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .auth-brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 24px;
+            }
+
+            .auth-brand-logo { width: 38px; height: 38px; }
+
+            .auth-brand-name {
+                font-size: 1.45rem;
+                font-weight: 900;
+                color: var(--text);
+                letter-spacing: 0.02em;
+            }
+
+            .auth-card {
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                border-radius: 20px;
+                padding: 26px 22px;
+                width: 100%;
+                max-width: 380px;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.85);
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .auth-card::before {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 44%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.65) 0%, transparent 100%);
+                border-radius: 20px 20px 0 0;
+                pointer-events: none;
+            }
+
+            [data-theme="dark"] .auth-card::before {
+                background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+            }
+
+            .auth-card-title {
+                margin: 0;
+                font-size: 1.2rem;
+                font-weight: 900;
+                color: var(--text);
+                position: relative; z-index: 1;
+            }
+
+            .auth-card-sub {
+                margin: -10px 0 0;
+                font-size: 0.86rem;
+                color: var(--muted);
+                position: relative; z-index: 1;
+                line-height: 1.45;
+            }
+
+            /* Mode toggle pill */
+            .auth-toggle {
+                display: flex;
+                background: var(--subtle);
+                border-radius: 10px;
+                padding: 3px;
+                gap: 2px;
+                position: relative; z-index: 1;
+            }
+
+            .auth-toggle-btn {
+                flex: 1;
+                background: transparent !important;
+                border: none !important;
+                border-radius: 7px !important;
+                color: var(--muted) !important;
+                font-size: 0.83rem !important;
+                font-weight: 700 !important;
+                min-height: unset !important;
+                height: 30px !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                transition: background 0.14s, color 0.14s !important;
+                letter-spacing: 0 !important;
+            }
+
+            .auth-toggle-btn::after { display: none !important; }
+
+            .auth-toggle-btn.active {
+                background: var(--panel-bg) !important;
+                color: var(--text) !important;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.10) !important;
+            }
+
+            .auth-fields {
+                display: grid;
+                gap: 11px;
+                position: relative; z-index: 1;
+            }
+
+            /* Show/hide register-only fields */
+            .auth-field-reg { display: none; }
+            .auth-mode-register .auth-field-reg { display: grid; gap: 7px; }
+            .auth-mode-register .auth-field-signin { display: none; }
+
+            /* Submit + skip buttons in auth screen */
+            .auth-btn {
+                width: 100% !important;
+                min-height: unset !important;
+                height: 38px !important;
+                font-size: 0.9rem !important;
+                position: relative; z-index: 1;
+                flex: none !important;
+            }
+
+            .auth-btn-secondary {
+                background: linear-gradient(180deg, #ffffff 0%, #e8ecf5 100%) !important;
+                color: var(--muted) !important;
+                border: 1.5px solid var(--panel-border) !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+            }
+
+            [data-theme="dark"] .auth-btn-secondary {
+                background: linear-gradient(180deg, #2a3050 0%, #1e2438 100%) !important;
+                border-color: rgba(255,255,255,0.10) !important;
+            }
+
+            .auth-msg {
+                padding: 9px 13px;
+                border-radius: 10px;
+                font-size: 0.86rem;
+                font-weight: 700;
+                display: none;
+                position: relative; z-index: 1;
+            }
+
+            .auth-msg.error { background: rgba(239,68,68,0.10); color: #dc2626; border: 1px solid rgba(239,68,68,0.28); }
+            .auth-msg.ok    { background: rgba(0,192,112,0.10); color: #059669; border: 1px solid rgba(0,192,112,0.28); }
+
+            .auth-footer {
+                text-align: center;
+                font-size: 0.8rem;
+                color: var(--muted);
+                position: relative; z-index: 1;
+            }
+
+            /* Legacy — kept for any remaining usages */
+            .auth-message {
+                padding: 10px 14px;
+                border-radius: 10px;
+                font-size: 0.88rem;
+                font-weight: 700;
+                display: none;
+                position: relative; z-index: 1;
+            }
+
+            .auth-message.error { background: rgba(239,68,68,0.10); color: #dc2626; border: 1px solid rgba(239,68,68,0.28); }
+            .auth-message.ok    { background: rgba(0,192,112,0.10); color: #059669; border: 1px solid rgba(0,192,112,0.28); }
+
+            .account-profile-card {
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                border-radius: 20px;
+                padding: 24px 22px;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                flex-wrap: wrap;
+            }
+
+            .account-profile-card::before {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                height: 44%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.65) 0%, transparent 100%);
+                border-radius: 20px 20px 0 0;
+                pointer-events: none;
+            }
+
+            [data-theme="dark"] .account-profile-card::before {
+                background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+            }
+
+            .account-avatar {
+                width: 54px; height: 54px;
+                background: linear-gradient(135deg, #1565c0 0%, #00c070 100%);
+                border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 1.5rem;
+                flex-shrink: 0;
+                position: relative; z-index: 1;
+                box-shadow: 0 3px 12px rgba(21,101,192,0.28);
+            }
+
+            .account-profile-info {
+                flex: 1;
+                position: relative; z-index: 1;
+                min-width: 0;
+            }
+
+            .account-profile-name {
+                font-size: 1.15rem;
+                font-weight: 900;
+                color: var(--text);
+                margin: 0 0 3px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .account-profile-label {
+                font-size: 0.84rem;
+                color: var(--muted);
+                margin: 0;
+            }
+
+            .account-profile-card .signout-btn-wrap {
+                position: relative; z-index: 1;
                 flex-shrink: 0;
             }
 
-            .setting-range-val {
-                font-size: 0.8rem;
-                color: var(--muted);
-                min-width: 36px;
-                text-align: right;
+            /* ===== LOADING SCREEN ===== */
+            #loading_screen {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                background: linear-gradient(180deg, #0c1445 0%, #080d28 100%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                transition: opacity 0.6s ease;
             }
 
-            .settings-reset-btn {
-                width: auto !important;
-                min-height: 36px !important;
-                padding: 0 16px !important;
-                font-size: 0.85rem !important;
-                border-radius: 10px !important;
-                flex: none !important;
-                background: var(--surface) !important;
-                border-color: rgba(139,92,246,0.3) !important;
-                color: var(--muted) !important;
-                font-weight: 600 !important;
+            #loading_screen.fade-out { opacity: 0; pointer-events: none; }
+
+            .loading-logo {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 14px;
+                filter: drop-shadow(0 0 24px rgba(0,192,112,0.55));
+                animation: ldr-float 3s ease-in-out infinite;
             }
-            /* ========================= */
+
+            @keyframes ldr-float {
+                0%, 100% { transform: translateY(0); }
+                50%       { transform: translateY(-8px); }
+            }
+
+            .loading-game-title {
+                font-size: 2.5rem;
+                font-weight: 900;
+                color: #ffffff;
+                letter-spacing: 0.09em;
+                margin-bottom: 44px;
+                text-shadow: 0 2px 20px rgba(0,192,112,0.45);
+            }
+
+            .loading-bar-wrap {
+                width: min(420px, 76vw);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .loading-bar-track {
+                width: 100%;
+                height: 7px;
+                background: rgba(255,255,255,0.10);
+                border-radius: 4px;
+                overflow: hidden;
+                box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+            }
+
+            .loading-bar-fill {
+                height: 100%;
+                width: 0%;
+                min-width: 3%;
+                background: linear-gradient(90deg, #1565c0, #00c070);
+                border-radius: 4px;
+                transition: width 0.4s ease;
+                box-shadow: 0 0 10px rgba(0,192,112,0.5);
+            }
+
+            .loading-status-text {
+                font-size: 0.75rem;
+                color: rgba(255,255,255,0.38);
+                text-transform: uppercase;
+                letter-spacing: 0.09em;
+                font-weight: 700;
+            }
+
+            /* ===== MISC ===== */
+            [hidden] { display: none !important; }
 
             #temporary_console {
                 white-space: pre-wrap;
@@ -368,270 +1109,98 @@
                 word-break: break-word;
             }
 
-            [hidden] {
-                display: none !important;
-            }
+            /* ===== THEME TOGGLE ===== */
+            .sb-theme-btn .sb-icon { font-size: 0.9rem; }
 
-            /* ===== Loading Screen ===== */
-            #loading_screen {
-                position: fixed;
-                inset: 0;
-                z-index: 9999;
-                background: #000;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                transition: opacity 0.5s ease;
-            }
-
-            #loading_screen.fade-out {
-                opacity: 0;
-                pointer-events: none;
-            }
-
-            .loading-logo {
-                width: 130px;
-                height: 130px;
-                margin-bottom: 14px;
-                filter: drop-shadow(0 0 28px rgba(139, 92, 246, 0.55));
-            }
-
-            .loading-game-title {
-                font-size: 2.6rem;
-                font-weight: 800;
-                color: #f0eafa;
-                letter-spacing: 0.08em;
-                margin-bottom: 44px;
-                text-shadow: 0 0 32px rgba(139, 92, 246, 0.6);
-            }
-
-            .loading-bar-wrap {
-                width: min(440px, 76vw);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 14px;
-            }
-
-            .loading-bar-track {
-                width: 100%;
-                height: 7px;
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 4px;
-                overflow: hidden;
-            }
-
-            .loading-bar-fill {
-                height: 100%;
-                width: 0%;
-                min-width: 3%;
-                background: linear-gradient(90deg, #7c3aed, #a78bfa);
-                border-radius: 4px;
-                transition: width 0.3s ease;
-            }
-
-            .loading-status-text {
-                font-size: 0.75rem;
-                color: rgba(255, 255, 255, 0.32);
-                letter-spacing: 0.06em;
-                text-transform: uppercase;
-            }
-            /* ========================= */
-
+            /* ===== MOBILE ===== */
             @media (max-width: 700px) {
-                body {
-                    padding-left: max(12px, env(safe-area-inset-left));
-                    padding-right: max(12px, env(safe-area-inset-right));
+                body { flex-direction: column-reverse; }
+
+                .sidebar {
+                    width: 100%;
+                    height: auto;
+                    position: fixed;
+                    bottom: 0; left: 0; right: 0; top: auto;
+                    flex-direction: row;
+                    border-right: none;
+                    border-top: 1px solid rgba(255,255,255,0.10);
+                    z-index: 300;
+                    overflow: visible;
+                    box-shadow: 0 -3px 16px rgba(0,0,0,0.25);
                 }
 
-                .install-panel {
+                .sidebar::before { display: none; }
+
+                .sb-brand, .sb-bottom { display: none; }
+
+                .sb-nav {
+                    flex-direction: row;
+                    justify-content: space-around;
+                    padding: 6px 8px;
+                    gap: 4px;
+                    width: 100%;
+                }
+
+                .sb-item {
                     flex-direction: column;
-                    align-items: stretch;
+                    gap: 2px;
+                    padding: 7px 8px;
+                    font-size: 0.72rem;
+                    border-radius: 10px;
+                    min-width: 52px;
+                    text-align: center;
+                    justify-content: center;
                 }
 
-                .panel {
-                    border-radius: 16px;
-                    padding: 14px;
-                }
-            }
+                .sb-icon { font-size: 1.2rem; width: auto; height: auto; }
 
-            .server-grid {
-                display: grid;
-                gap: 14px;
-                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            }
+                .app-layout { padding-bottom: 70px; }
 
-            .server-card {
-                border-radius: 14px;
-                overflow: hidden;
-                border: 1px solid var(--surface-border);
-                background: var(--surface-strong);
-                display: flex;
-                flex-direction: column;
-            }
+                .rb-page { padding: 16px 14px; }
 
-            .server-card-image {
-                height: 130px;
-                background-size: cover;
-                background-position: center;
-                background-color: #110823;
-            }
-
-            .server-card-body {
-                padding: 12px;
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-                flex: 1;
-            }
-
-            .server-card-name {
-                font-size: 1.05rem;
-                font-weight: 800;
-                margin: 0;
-            }
-
-            .server-card-motd {
-                font-size: 0.8rem;
-                color: var(--muted);
-                font-style: italic;
-                margin: 0;
-            }
-
-            .server-card-desc {
-                font-size: 0.85rem;
-                color: var(--muted);
-                margin: 0;
-                flex: 1;
-                line-height: 1.4;
-            }
-
-            .server-card-footer {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 10px;
-                gap: 8px;
-            }
-
-            .server-card-players {
-                font-size: 0.78rem;
-                color: var(--muted);
-            }
-
-            .server-card-footer button {
-                min-height: 36px;
-                padding: 0 16px;
-                font-size: 0.9rem;
-                border-radius: 10px;
-                width: auto;
-                flex-shrink: 0;
-            }
-
-            .server-card.color-red  { border-color: rgba(239,68,68,0.5); }
-            .server-card.color-red  .server-card-image { border-bottom: 3px solid rgba(239,68,68,0.8); }
-            .server-card.color-blue { border-color: rgba(59,130,246,0.5); }
-            .server-card.color-blue .server-card-image { border-bottom: 3px solid rgba(59,130,246,0.8); }
-            .server-card.color-yellow { border-color: rgba(234,179,8,0.5); }
-            .server-card.color-yellow .server-card-image { border-bottom: 3px solid rgba(234,179,8,0.8); }
-            .server-card.color-green { border-color: rgba(34,197,94,0.5); }
-            .server-card.color-green .server-card-image { border-bottom: 3px solid rgba(34,197,94,0.8); }
-
-            /* ===== Auth ===== */
-            .hero-head {
-                display: flex;
-                align-items: baseline;
-                justify-content: space-between;
-                gap: 12px;
-                flex-wrap: wrap;
-                margin-bottom: 8px;
-            }
-
-            .hero-head h1 {
-                margin: 0;
-            }
-
-            .signin-btn {
-                width: auto !important;
-                min-height: 38px !important;
-                padding: 0 18px !important;
-                font-size: 0.9rem !important;
-                border-radius: 10px !important;
-                font-weight: 700 !important;
-                flex-shrink: 0;
-            }
-
-            .auth-modal-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                z-index: 999;
-                background: rgba(0, 0, 0, 0.72);
-                backdrop-filter: blur(4px);
-                align-items: center;
-                justify-content: center;
-            }
-
-            .auth-modal-overlay.open {
-                display: flex;
-            }
-
-            .auth-modal {
-                background: var(--surface-strong);
-                border: 1px solid var(--surface-border);
-                border-radius: 20px;
-                padding: 28px 24px;
-                width: min(420px, 92vw);
-                box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-                display: grid;
-                gap: 16px;
-            }
-
-            .auth-modal h2 {
-                margin: 0;
-                font-size: 1.3rem;
-                font-weight: 800;
-                color: var(--text);
-            }
-
-            .auth-modal .field input {
-                width: 100%;
-            }
-
-            .auth-message {
-                padding: 10px 14px;
-                border-radius: 10px;
-                font-size: 0.88rem;
-                font-weight: 700;
-                display: none;
-            }
-
-            .auth-message.error  { background: rgba(239,68,68,0.22);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
-            .auth-message.ok     { background: rgba(34,197,94,0.18);   color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
-
-            .auth-modal .actions {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .auth-modal .actions button {
-                width: 100%;
-                min-height: 40px;
-                max-height: 44px;
-                padding: 0 18px;
-                font-size: 0.95rem;
-                border-radius: 12px;
-                flex: none;
-            }
-
-            .auth-modal .actions .btn-secondary {
-                background: var(--surface);
-                border-color: rgba(139, 92, 246, 0.3);
-                color: var(--muted);
-                font-weight: 600;
+                .play-hero { flex-direction: column; gap: 20px; }
+                .play-form-card { width: 100%; }
             }
         </style>
+        <script>
+            /* ---- theme init: runs before first paint to prevent flash ---- */
+            (function () {
+                var t = localStorage.getItem('bloxel_theme');
+                if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            }());
+
+            var ICON_MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+            var ICON_SUN  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+
+            function toggleTheme() {
+                var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('bloxel_theme', 'light');
+                    var icon = document.getElementById('theme_icon');
+                    var lbl  = document.getElementById('theme_label');
+                    if (icon) icon.innerHTML = ICON_MOON;
+                    if (lbl)  lbl.textContent  = 'Dark Mode';
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('bloxel_theme', 'dark');
+                    var icon = document.getElementById('theme_icon');
+                    var lbl  = document.getElementById('theme_label');
+                    if (icon) icon.innerHTML = ICON_SUN;
+                    if (lbl)  lbl.textContent  = 'Light Mode';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                var icon = document.getElementById('theme_icon');
+                var lbl  = document.getElementById('theme_label');
+                if (isDark) {
+                    if (icon) icon.innerHTML = ICON_SUN;
+                    if (lbl)  lbl.textContent  = 'Light Mode';
+                }
+            });
+        </script>
   </head>
     <body>
         <!-- Loading Screen -->
@@ -646,191 +1215,320 @@
             </div>
         </div>
 
-        <main class="landing-shell">
-            <section class="hero">
-                <div class="hero-head">
-                    <h1>Bloxel</h1>
-                    <button id="signin_btn" type="button" class="signin-btn">Sign In</button>
+        <!-- ===== FULLSCREEN AUTH / EMAIL PROMPT ===== -->
+        <div id="auth_fullscreen" class="auth-screen" hidden>
+
+            <div class="auth-brand">
+                <img class="auth-brand-logo" src="icon.svg" alt="Bloxel">
+                <span class="auth-brand-name">Bloxel</span>
+            </div>
+
+            <!-- Merged Sign In / Create Account card -->
+            <div id="auth_form_section" class="auth-card">
+                <p class="auth-card-title" id="auth_form_title">Welcome back</p>
+                <p class="auth-card-sub" id="auth_form_sub">Sign in to your EtherDeck account to play.</p>
+
+                <div class="auth-toggle">
+                    <button id="auth_tab_signin" class="auth-toggle-btn active" type="button" onclick="authSwitchMode('signin')">Sign In</button>
+                    <button id="auth_tab_register" class="auth-toggle-btn" type="button" onclick="authSwitchMode('register')">Create Account</button>
                 </div>
-                <p>Installable on iPhone, iPad, and Android with a mobile-safe launcher layout. Gameplay still works best in landscape with a keyboard, mouse, or controller.</p>
-            </section>
 
-            <!-- Auth modal -->
-            <div id="auth_modal_overlay" class="auth-modal-overlay" role="dialog" aria-modal="true" aria-label="Sign in">
-                <div class="auth-modal">
-                    <h2 id="auth_modal_title">EtherDeck Account</h2>
-
-                    <div class="section">
-                        <div class="field">
-                            <label for="auth_username">Username</label>
-                            <input type="text" id="auth_username" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Enter username">
-                        </div>
-                        <div class="field">
-                            <label for="auth_password">Password</label>
-                            <input type="password" id="auth_password" autocomplete="current-password" placeholder="Enter password">
-                        </div>
+                <div id="auth_form_fields" class="auth-fields">
+                    <!-- Register only: username -->
+                    <div class="auth-field-reg field">
+                        <label for="auth_reg_username">Username</label>
+                        <input type="text" id="auth_reg_username" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Choose a username">
                     </div>
-
-                    <div id="auth_message" class="auth-message"></div>
-
-                    <div class="actions">
-                        <button id="auth_login_btn" type="button">Sign In</button>
-                        <button id="auth_register_btn" type="button">Register</button>
-                        <button id="auth_back_btn" type="button" class="btn-secondary">Cancel</button>
+                    <!-- Sign-in only: username or email -->
+                    <div class="auth-field-signin field">
+                        <label for="auth_login_id">Username or Email</label>
+                        <input type="text" id="auth_login_id" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Username or email">
                     </div>
+                    <!-- Register only: email -->
+                    <div class="auth-field-reg field">
+                        <label for="auth_reg_email">Email</label>
+                        <input type="email" id="auth_reg_email" autocomplete="email" placeholder="your@email.com">
+                    </div>
+                    <!-- Shared: password -->
+                    <div class="field">
+                        <label for="auth_password">Password</label>
+                        <input type="password" id="auth_password" autocomplete="current-password" placeholder="Password">
+                    </div>
+                </div>
+
+                <div id="auth_msg" class="auth-msg"></div>
+
+                <button id="auth_submit_btn" type="button" class="auth-btn">Sign In</button>
+            </div>
+
+            <!-- Email prompt card -->
+            <div id="email_prompt_section" class="auth-card" hidden>
+                <p class="auth-card-title">Add your email</p>
+                <p class="auth-card-sub">Your account doesn't have an email address. Add one to keep your account secure.</p>
+
+                <div class="auth-fields">
+                    <div class="field">
+                        <label for="email_prompt_input">Email address</label>
+                        <input type="email" id="email_prompt_input" autocomplete="email" placeholder="your@email.com">
+                    </div>
+                </div>
+
+                <div id="email_prompt_msg" class="auth-msg"></div>
+
+                <div style="display:flex;gap:8px;position:relative;z-index:1;">
+                    <button id="email_prompt_skip_btn" type="button" class="auth-btn auth-btn-secondary" style="flex:1;">Skip for now</button>
                 </div>
             </div>
 
-            <section id="install_panel" class="panel install-panel" hidden>
+        </div>
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sb-brand">
+                <img class="sb-logo" src="icon.svg" alt="Bloxel logo">
+                <span class="sb-name">Bloxel</span>
+            </div>
+            <div id="tab_bar" class="sb-nav" style="display:none;">
+                <button class="tab-btn sb-item active" onclick="switchTab('singleplayer')">
+                    <span class="sb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg></span> Play
+                </button>
+                <button class="tab-btn sb-item" onclick="switchTab('multiplayer')">
+                    <span class="sb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/></svg></span> Discover
+                </button>
+                <button class="tab-btn sb-item" onclick="switchTab('settings')">
+                    <span class="sb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Settings
+                </button>
+                <button class="tab-btn sb-item" onclick="switchTab('account')">
+                    <span class="sb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Account
+                </button>
+                <button class="tab-btn sb-item" id="friends_tab_btn" onclick="switchTab('friends')" style="position:relative;">
+                    <span class="sb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                    Friends<span id="friends_badge" hidden style="margin-left:6px;background:#ef4444;color:#fff;border-radius:9px;font-size:0.7rem;font-weight:900;padding:1px 6px;vertical-align:middle;"></span>
+                </button>
+            </div>
+            <div class="sb-bottom">
+                <button type="button" class="sb-item sb-theme-btn" onclick="toggleTheme()">
+                    <span class="sb-icon" id="theme_icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+                    <span id="theme_label">Dark Mode</span>
+                </button>
+                <button id="signin_btn" type="button" class="signin-btn">
+                    <span class="sb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span id="signin_label"> Sign In</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- App layout -->
+        <div class="app-layout">
+            <div id="install_panel" class="rb-banner" hidden>
                 <div>
                     <strong>Add to Home Screen</strong>
-                    <p id="install_hint">Install this build for a full-screen launcher.</p>
+                    <span id="install_hint" style="margin-left:8px;color:var(--muted);font-size:0.88rem;">Install for full-screen launcher.</span>
                 </div>
-                <button id="install_app" type="button">Install</button>
-            </section>
+                <button id="install_app" type="button" style="min-height:34px;padding:0 16px;font-size:0.87rem;border-radius:9px;">Install</button>
+            </div>
 
-            <div class="stack">
-                <div id="temporary_console" class="panel" hidden></div>
+            <div id="temporary_console" class="rb-debug-console" hidden></div>
 
-                <!-- Tab bar (hidden until launcher is ready) -->
-                <div id="tab_bar" class="tab-bar" style="display: none;">
-                    <button class="tab-btn active" onclick="switchTab('singleplayer')">Singleplayer</button>
-                    <button class="tab-btn" onclick="switchTab('multiplayer')">Multiplayer</button>
-                    <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
-                </div>
+            <main class="rb-page">
 
-                <!-- Singleplayer tab -->
-                <div id="tab_singleplayer" class="tab-panel active" style="display: none;">
-                    <section id="launch_form" class="panel section">
-                        <div>
-                            <span class="section-title">Play</span>
-                            <p class="section-copy">Start a local world in your browser. After launching you can share the join link so friends can connect.</p>
-                        </div>
-
-                        <div class="fields">
-                            <div class="field">
-                                <label for="multiplayer_username">Player Name</label>
-                                <input type="text" id="multiplayer_username" required="" pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false">
+                <!-- ===== PLAY TAB ===== -->
+                <div id="tab_singleplayer" class="tab-panel active" style="display:none;">
+                    <div class="panel section">
+                        <div class="play-hero">
+                            <div class="play-hero-info">
+                                <h1 class="play-hero-title">Bloxel</h1>
+                                <p class="play-hero-sub">Start a local world in your browser. After launching you can share the join link so friends can connect.</p>
                             </div>
-
-                            <div class="field">
-                                <label for="multiplayer_game">Game</label>
-                                <select id="multiplayer_game">
-                                    <option value="minetest_game">minetest_game</option>
-                                </select>
+                            <div class="play-form-card section" style="display:grid;gap:14px;">
+                                <div class="field">
+                                    <label for="multiplayer_username">Player Name</label>
+                                    <input type="text" id="multiplayer_username" required pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" title="Alphanumeric, 19 chars max" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="YourName">
+                                </div>
+                                <div class="field">
+                                    <label for="multiplayer_game">Game</label>
+                                    <select id="multiplayer_game">
+                                        <option value="minetest_game">minetest_game</option>
+                                    </select>
+                                </div>
+                                <button id="launch_server" type="button" class="wii-launch-btn">&#x25B6; Launch Game</button>
                             </div>
                         </div>
-
-                        <div class="actions">
-                            <button id="launch_server" type="button">Launch Game</button>
-                        </div>
-                    </section>
+                    </div>
                 </div>
 
-                <!-- Multiplayer tab -->
-                <div id="tab_multiplayer" class="tab-panel" style="display: none;">
-                    <section id="server_list_form" class="panel section">
-                        <div>
-                            <span class="section-title">Servers</span>
-                            <p class="section-copy">Enter your player name then click Join to connect to a server.</p>
-                        </div>
-                        <div class="field">
-                            <label for="player_name">Player Name</label>
-                            <input type="text" id="player_name" required="" pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Enter your name...">
-                        </div>
-                        <div id="server_cards" class="server-grid">
-                            <p style="color:var(--muted)">Loading servers&hellip;</p>
-                        </div>
-                    </section>
+                <!-- ===== DISCOVER TAB ===== -->
+                <div id="tab_multiplayer" class="tab-panel" style="display:none;">
+                    <div class="rb-discover-page">
 
-                    <section id="join_code_form" class="panel section">
-                        <div>
-                            <span class="section-title">Join a Friend</span>
-                            <p class="section-copy">Paste the join link or code your friend shared with you, then click Join.</p>
-                        </div>
-
-                        <div class="fields">
-                            <div class="field">
-                                <label for="join_code_input">Join Code or Link</label>
-                                <input type="text" id="join_code_input" placeholder="Paste code or link here..." autocapitalize="off" autocomplete="off" spellcheck="false">
+                        <!-- Server list -->
+                        <div class="rb-section">
+                            <div class="rb-discover-top">
+                                <h2 class="rb-section-heading">Servers</h2>
+                                <div class="rb-name-field">
+                                    <label for="player_name">Your Name</label>
+                                    <input type="text" id="player_name" required pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Enter your name&hellip;">
+                                </div>
+                            </div>
+                            <div id="server_cards" class="server-grid">
+                                <p style="color:var(--muted)">Loading servers&hellip;</p>
                             </div>
                         </div>
 
-                        <div class="actions">
-                            <button id="join_code_launch" type="button">Join Game</button>
-                        </div>
-                    </section>
-
-                    <section id="join_form" class="panel section" style="display: none;">
-                        <div>
-                            <span class="section-title">Join Game</span>
-                            <p class="section-copy">Enter a player name to join the browser-hosted session linked from this URL.</p>
-                        </div>
-
-                        <div class="fields">
-                            <div class="field">
-                                <label for="join_username">Player Name</label>
-                                <input type="text" id="join_username" required="" pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max" autocapitalize="off" autocomplete="username" spellcheck="false">
+                        <!-- Join a friend -->
+                        <div class="rb-section">
+                            <h2 class="rb-section-heading">Join a Friend</h2>
+                            <div class="panel section">
+                                <p class="section-copy">Paste the join link or code your friend shared with you, then click Join.</p>
+                                <div class="rb-join-row">
+                                    <input type="text" id="join_code_input" placeholder="Paste code or link here&hellip;" autocapitalize="off" autocomplete="off" spellcheck="false">
+                                    <button id="join_code_launch" type="button">Join</button>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="actions">
-                            <button id="join_launch" type="button">Join Game</button>
+                        <!-- Join from URL (shown when ?join= param present) -->
+                        <div id="join_form" class="rb-section" style="display:none;">
+                            <h2 class="rb-section-heading">Join Game</h2>
+                            <div class="panel section">
+                                <p class="section-copy">Enter a player name to join the browser-hosted session linked from this URL.</p>
+                                <div class="fields">
+                                    <div class="field">
+                                        <label for="join_username">Player Name</label>
+                                        <input type="text" id="join_username" required pattern="[A-Za-z0-9_\-]{1,20}" maxlength="19" autocapitalize="off" autocomplete="username" spellcheck="false">
+                                    </div>
+                                </div>
+                                <div class="actions">
+                                    <button id="join_launch" type="button">Join Game</button>
+                                </div>
+                            </div>
                         </div>
-                    </section>
+
+                    </div>
                 </div>
 
-                <!-- Settings tab -->
-                <div id="tab_settings" class="tab-panel" style="display: none;">
-                    <section class="panel section">
-                        <div>
+                <!-- ===== SETTINGS TAB ===== -->
+                <div id="tab_settings" class="tab-panel" style="display:none;">
+                    <div class="rb-settings-page">
+
+                        <div class="panel section">
                             <span class="section-title">Network &amp; Language</span>
-                            <p class="section-copy">Choose the proxy region closest to you for the best connection, and set your preferred language.</p>
-                        </div>
-                        <div class="fields">
-                            <div class="field">
-                                <label for="select_proxy">Network Proxy</label>
-                                <select id="select_proxy">
-                                    <!-- filled by javascript -->
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label for="select_language">Language</label>
-                                <select id="select_language">
-                                    <!-- filled by javascript -->
-                                </select>
+                            <p class="section-copy">Choose the proxy region closest to you and set your preferred language.</p>
+                            <div class="fields">
+                                <div class="field">
+                                    <label for="select_proxy">Network Proxy</label>
+                                    <select id="select_proxy"><!-- filled by JS --></select>
+                                </div>
+                                <div class="field">
+                                    <label for="select_language">Language</label>
+                                    <select id="select_language"><!-- filled by JS --></select>
+                                </div>
                             </div>
                         </div>
-                    </section>
 
-                    <!-- VR / Meta Quest section -->
-                    <section class="panel section" id="vr_info_panel">
-                        <div>
-                            <span class="section-title">VR Mode — Meta Quest</span>
-                            <p class="section-copy">WebXR immersive-VR is supported in Meta Quest Browser 21+. After the game loads, tap <strong>VR Mode</strong> in the top bar to enter your headset. Head rotation maps to camera look and Quest controllers drive all movement and interactions.</p>
+                        <div class="panel section" id="vr_info_panel">
+                            <span class="section-title">VR Mode &mdash; Meta Quest</span>
+                            <p class="section-copy">WebXR immersive-VR is supported in Meta Quest Browser 21+. After the game loads, tap <strong>VR Mode</strong> in the top bar to enter your headset.</p>
+                            <div class="panel compat-note" style="margin-top:0;">
+                                <p style="margin:0;font-size:0.85rem;color:var(--muted)">
+                                    <strong>Controller mapping:</strong><br>
+                                    Left stick&nbsp;&rarr; Move &nbsp;|&nbsp; Right trigger&nbsp;&rarr; Dig &nbsp;|&nbsp; Right grip&nbsp;&rarr; Place<br>
+                                    Left trigger&nbsp;&rarr; Jump &nbsp;|&nbsp; Left grip&nbsp;&rarr; Sneak &nbsp;|&nbsp; X&nbsp;&rarr; Inventory &nbsp;|&nbsp; Y&nbsp;&rarr; Menu<br>
+                                    A&nbsp;&rarr; Drop &nbsp;|&nbsp; B&nbsp;&rarr; Chat &nbsp;|&nbsp; Right stick X&nbsp;&rarr; Hotbar scroll
+                                </p>
+                            </div>
                         </div>
-                        <div class="panel compat-note" style="margin-top:0;">
-                            <p style="margin:0;font-size:0.85rem;color:var(--muted)">
-                                <strong>Controller mapping:</strong><br>
-                                Left stick&nbsp;→ Move &nbsp;|&nbsp; Right trigger&nbsp;→ Dig &nbsp;|&nbsp; Right grip&nbsp;→ Place<br>
-                                Left trigger&nbsp;→ Jump &nbsp;|&nbsp; Left grip&nbsp;→ Sneak &nbsp;|&nbsp; X&nbsp;→ Inventory &nbsp;|&nbsp; Y&nbsp;→ Menu<br>
-                                A&nbsp;→ Drop &nbsp;|&nbsp; B&nbsp;→ Chat &nbsp;|&nbsp; Right stick X&nbsp;→ Hotbar scroll
-                            </p>
-                        </div>
-                    </section>
 
-                    <!-- Game settings panels built by JS -->
-                    <div id="game_settings_container"></div>
+                        <!-- Game settings panels built by JS -->
+                        <div id="game_settings_container"></div>
 
-                    <section class="panel compat-note">
-                        <div>
+                        <div class="panel compat-note section">
                             <span class="section-title">Compatibility Notes</span>
-                            <p>Canvas sizing is capped for mobile browsers to keep the render target within sane bounds. This build is installable on Android and can be added to the home screen on iOS. WebXR VR is now supported for Meta Quest Browser — head tracking controls your camera, and both Quest controllers are fully mapped.</p>
+                            <p class="section-copy">Canvas sizing is capped for mobile browsers. Installable on Android and iOS. WebXR VR is supported for Meta Quest Browser &mdash; head tracking controls your camera and both Quest controllers are fully mapped.</p>
                         </div>
-                    </section>
+
+                    </div>
+                </div>
+
+                <!-- ===== ACCOUNT TAB ===== -->
+                <div id="tab_account" class="tab-panel" style="display:none;">
+                    <div class="account-page">
+                        <div>
+                            <h1>Account</h1>
+                            <p class="account-sub">Your EtherDeck profile.</p>
+                        </div>
+                        <div id="account_profile_section">
+                            <div class="account-profile-card">
+                                <div class="account-avatar">&#x1F464;</div>
+                                <div class="account-profile-info">
+                                    <p class="account-profile-name" id="account_display_name">&mdash;</p>
+                                    <p class="account-profile-label">Signed in &bull; EtherDeck Account</p>
+                                </div>
+                                <div class="signout-btn-wrap">
+                                    <button type="button" id="account_signout_btn">Sign Out</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== FRIENDS TAB ===== -->
+                <div id="tab_friends" class="tab-panel" style="display:none;">
+                    <div class="friends-page">
+                        <div>
+                            <h1>Friends</h1>
+                            <p class="friends-sub">Add friends, see who's online, and chat or invite them.</p>
+                        </div>
+
+                        <!-- Pending invites section -->
+                        <div id="friends_invites_section" hidden>
+                            <p class="friends-section-title">Game Invites</p>
+                            <div class="friends-list" id="friends_invites_list"></div>
+                        </div>
+
+                        <!-- Pending requests section -->
+                        <div id="friends_requests_section" hidden>
+                            <p class="friends-section-title">Pending Requests</p>
+                            <div class="friends-list" id="friends_requests_list"></div>
+                        </div>
+
+                        <!-- Add a friend -->
+                        <div>
+                            <p class="friends-section-title">Add Friend</p>
+                            <div class="friends-add-row">
+                                <input type="text" id="friends_add_input" placeholder="Username…" autocapitalize="off" autocomplete="off" spellcheck="false">
+                                <button onclick="friendsSendRequest()">Send Request</button>
+                            </div>
+                            <p id="friends_add_msg" style="font-size:0.83rem;margin:6px 0 0;color:var(--muted);min-height:1.1em;"></p>
+                        </div>
+
+                        <!-- Friend list -->
+                        <div>
+                            <p class="friends-section-title">Friends <span id="friends_count" style="font-weight:400;font-size:0.85em;opacity:0.6;"></span></p>
+                            <div class="friends-list" id="friends_list">
+                                <p class="friends-empty">Loading…</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div><!-- end .app-layout -->
+
+        <!-- ===== FRIENDS CHAT SLIDE-UP PANEL ===== -->
+        <div id="friend_chat_overlay" class="friend-chat-overlay">
+            <div class="friend-chat-panel">
+                <div class="friend-chat-header">
+                    <span class="friend-dot online" id="friend_chat_dot"></span>
+                    <span class="friend-chat-title" id="friend_chat_title">Chat</span>
+                    <button class="friend-chat-close" onclick="closeFriendChat()">&#x2715;</button>
+                </div>
+                <div class="friend-chat-msgs" id="friend_chat_msgs"></div>
+                <div class="friend-chat-input-row">
+                    <input type="text" id="friend_chat_input" placeholder="Type a message…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                    <button onclick="sendFriendMessage()">Send</button>
                 </div>
             </div>
-        </main>
+        </div>
     <script type="text/javascript" src="%__RELEASE_UUID__%/launcher.js"></script>
     <script type="text/javascript">
             if ('serviceWorker' in navigator) {
@@ -1051,8 +1749,10 @@
       }
       // ============================
 
+      const GATED_TABS = ['singleplayer','multiplayer','settings'];
+
       function switchTab(name) {
-          ['singleplayer','multiplayer','settings'].forEach(t => {
+          ['singleplayer','multiplayer','settings','account','friends'].forEach(t => {
               const panel = document.getElementById('tab_' + t);
               const btn = document.querySelector(`.tab-btn[onclick="switchTab('${t}')"]`);
               if (panel) {
@@ -1061,6 +1761,7 @@
               }
               if (btn) btn.classList.toggle('active', t === name);
           });
+          if (name === 'friends') friendsRefresh();
       }
 
       function enableLaunchForm() {
@@ -1068,16 +1769,18 @@
           if (tabBar) tabBar.style.display = '';
 
           if (join_code) {
-              // Joining via URL — show multiplayer tab with the join panel visible
               document.getElementById('join_form').style.display = 'block';
               switchTab('multiplayer');
           } else {
               switchTab('singleplayer');
           }
 
+          // Re-check auth state now that the tab bar is shown
+          if (typeof checkAuthState === 'function') checkAuthState();
+
           const select_proxy = document.getElementById('select_proxy');
           const proxies = [
-              [ "wss://bc3d.etherdeck.org/proxy", "Default" ],
+              [ "wss://tjcr.ngrok-free.app", "Default" ],
               [ "wss://na1.dustlabs.io/mtproxy", "North America" ],
               [ "wss://sa1.dustlabs.io/mtproxy", "South America" ],
               [ "wss://eu1.dustlabs.io/mtproxy", "Europe" ],
@@ -1390,8 +2093,8 @@
               }
           }
 
-          async register(username, password) {
-              const result = await this.request('register', { username, password });
+          async register(username, email, password) {
+              const result = await this.request('register', { username, email, password });
               if (result.success) {
                   this.currentUser = result.data;
                   this.currentUser.password = password;
@@ -1400,8 +2103,8 @@
               return result;
           }
 
-          async login(username, password) {
-              const result = await this.request('login', { username, password });
+          async login(loginId, password) {
+              const result = await this.request('login', { login_id: loginId, password });
               if (result.success) {
                   this.currentUser = result.data;
                   this.currentUser.password = password;
@@ -1433,15 +2136,26 @@
           isLoggedIn()  { return this.currentUser !== null; }
           getUsername() { return this.currentUser ? this.currentUser.username : null; }
           getPassword() { return this.currentUser ? this.currentUser.password : null; }
+          getEmail()    { return this.currentUser ? (this.currentUser.email || null) : null; }
+          hasEmail()    { return !!(this.currentUser && this.currentUser.email && this.currentUser.email.trim() !== ''); }
+
+          async addEmail(email) {
+              const result = await this.request('add_email', { email, username: this.currentUser.username });
+              if (result.success) {
+                  this.currentUser.email = email;
+                  this.saveSession();
+              }
+              return result;
+          }
 
           updateUI() {
-              const btn = document.getElementById('signin_btn');
-              const playerNameInput      = document.getElementById('player_name');
+              const lbl = document.getElementById('signin_label');
+              const playerNameInput          = document.getElementById('player_name');
               const multiplayerUsernameInput = document.getElementById('multiplayer_username');
-              if (!btn) return;
+              const displayName              = document.getElementById('account_display_name');
               if (this.isLoggedIn()) {
-                  btn.textContent = this.getUsername() + ' \u2022 Sign Out';
-                  // Fill and lock both username fields
+                  if (lbl) lbl.textContent = ' ' + this.getUsername();
+                  if (displayName) displayName.textContent = this.getUsername();
                   [playerNameInput, multiplayerUsernameInput].forEach(el => {
                       if (!el) return;
                       el.value    = this.getUsername();
@@ -1450,8 +2164,7 @@
                       el.style.cursor  = 'not-allowed';
                   });
               } else {
-                  btn.textContent = 'Sign In';
-                  // Unlock fields
+                  if (lbl) lbl.textContent = ' Sign In';
                   [playerNameInput, multiplayerUsernameInput].forEach(el => {
                       if (!el) return;
                       el.value    = '';
@@ -1460,97 +2173,475 @@
                       el.style.cursor  = '';
                   });
               }
+              if (typeof checkAuthState === 'function') checkAuthState();
           }
       }
 
       const etherdeckAuth = new EtherDeckAuth();
+      // Sync sidebar label / player-name inputs to the restored session immediately.
+      // updateUI() is only called after explicit login/logout normally, so without
+      // this the sidebar still shows "Sign In" after a page reload even though the
+      // session was successfully loaded from localStorage.
+      etherdeckAuth.updateUI();
 
-      // Sign-in button
+      // ===== Auth screen helpers =====
+      let _authMode = 'signin';
+
+      function authSwitchMode(mode) {
+          _authMode = mode;
+          const isReg = mode === 'register';
+          document.getElementById('auth_tab_signin').classList.toggle('active', !isReg);
+          document.getElementById('auth_tab_register').classList.toggle('active', isReg);
+          const fields = document.getElementById('auth_form_fields');
+          fields.classList.toggle('auth-mode-register', isReg);
+          document.getElementById('auth_form_title').textContent = isReg ? 'Create an account' : 'Welcome back';
+          document.getElementById('auth_form_sub').textContent   = isReg
+              ? 'Join Bloxel with a free EtherDeck account.'
+              : 'Sign in to your EtherDeck account to play.';
+          document.getElementById('auth_submit_btn').textContent = isReg ? 'Create Account' : 'Sign In';
+          const msg = document.getElementById('auth_msg');
+          msg.style.display = 'none'; msg.textContent = '';
+      }
+
+      function showAuthMsg(text, isError) {
+          const el = document.getElementById('auth_msg');
+          if (!el) return;
+          el.textContent = text;
+          el.className = 'auth-msg ' + (isError ? 'error' : 'ok');
+          el.style.display = 'block';
+      }
+
+      function showEmailMsg(text, isError) {
+          const el = document.getElementById('email_prompt_msg');
+          if (!el) return;
+          el.textContent = text;
+          el.className = 'auth-msg ' + (isError ? 'error' : 'ok');
+          el.style.display = 'block';
+      }
+
+      function checkAuthState() {
+          const fs          = document.getElementById('auth_fullscreen');
+          const formSect    = document.getElementById('auth_form_section');
+          const emailSect   = document.getElementById('email_prompt_section');
+          if (!fs) return;
+          if (!etherdeckAuth.isLoggedIn()) {
+              formSect.hidden  = false;
+              emailSect.hidden = true;
+              fs.hidden = false;
+          } else if (!etherdeckAuth.hasEmail()) {
+              // Only nag if the user hasn't already permanently skipped for this account
+              const skipKey = 'email_skip_' + (etherdeckAuth.getUsername() || '');
+              if (localStorage.getItem(skipKey)) {
+                  fs.hidden = true;
+                  const tabBar = document.getElementById('tab_bar');
+                  if (tabBar && tabBar.style.display !== 'none') switchTab('singleplayer');
+              } else {
+                  formSect.hidden  = true;
+                  emailSect.hidden = false;
+                  fs.hidden = false;
+              }
+          } else {
+              fs.hidden = true;
+              // Navigate to play tab if tab_bar is visible
+              const tabBar = document.getElementById('tab_bar');
+              if (tabBar && tabBar.style.display !== 'none') {
+                  switchTab('singleplayer');
+              }
+          }
+      }
+
+      // ===== Wire up auth form =====
       {
-          const overlay   = document.getElementById('auth_modal_overlay');
-          const signinBtn = document.getElementById('signin_btn');
-          const loginBtn  = document.getElementById('auth_login_btn');
-          const registerBtn = document.getElementById('auth_register_btn');
-          const backBtn   = document.getElementById('auth_back_btn');
-          const msgEl     = document.getElementById('auth_message');
-          const userInput = document.getElementById('auth_username');
-          const passInput = document.getElementById('auth_password');
+          const submitBtn   = document.getElementById('auth_submit_btn');
+          const loginIdInp  = document.getElementById('auth_login_id');
+          const regUserInp  = document.getElementById('auth_reg_username');
+          const regEmailInp = document.getElementById('auth_reg_email');
+          const passInp     = document.getElementById('auth_password');
+          const signinBtn   = document.getElementById('signin_btn');
+          const signoutBtn  = document.getElementById('account_signout_btn');
+          const skipBtn     = document.getElementById('email_prompt_skip_btn');
+          const emailInp    = document.getElementById('email_prompt_input');
 
-          function showMsg(text, isError) {
-              msgEl.textContent = text;
-              msgEl.className = 'auth-message ' + (isError ? 'error' : 'ok');
-              msgEl.style.display = 'block';
+          if (passInp) passInp.addEventListener('keydown', e => { if (e.key === 'Enter') submitBtn && submitBtn.click(); });
+
+          if (submitBtn) {
+              submitBtn.addEventListener('click', async () => {
+                  const isReg = _authMode === 'register';
+                  const pass  = passInp ? passInp.value : '';
+                  if (isReg) {
+                      const u = regUserInp  ? regUserInp.value.trim()  : '';
+                      const e = regEmailInp ? regEmailInp.value.trim() : '';
+                      if (!u || !e || !pass) { showAuthMsg('Please fill in all fields.', true); return; }
+                      submitBtn.disabled = true; submitBtn.textContent = 'Creating account\u2026';
+                      const result = await etherdeckAuth.register(u, e, pass);
+                      if (result.success) {
+                          showAuthMsg('Account created! Signing you in\u2026', false);
+                      } else {
+                          showAuthMsg(result.message, true);
+                      }
+                      submitBtn.disabled = false; submitBtn.textContent = 'Create Account';
+                  } else {
+                      const id = loginIdInp ? loginIdInp.value.trim() : '';
+                      if (!id || !pass) { showAuthMsg('Enter your username/email and password.', true); return; }
+                      submitBtn.disabled = true; submitBtn.textContent = 'Signing in\u2026';
+                      const result = await etherdeckAuth.login(id, pass);
+                      if (result.success) {
+                          showAuthMsg('Signed in!', false);
+                      } else {
+                          showAuthMsg(result.message, true);
+                      }
+                      submitBtn.disabled = false; submitBtn.textContent = 'Sign In';
+                  }
+              });
           }
 
-          function clearMsg() {
-              msgEl.style.display = 'none';
-              msgEl.textContent = '';
-              msgEl.className = 'auth-message';
+          if (signinBtn) {
+              signinBtn.addEventListener('click', () => {
+                  if (etherdeckAuth.isLoggedIn()) {
+                      // Show account tab so user can see their profile / sign out deliberately
+                      const tabBar = document.getElementById('tab_bar');
+                      if (tabBar && tabBar.style.display !== 'none') switchTab('account');
+                  } else {
+                      checkAuthState();
+                  }
+              });
           }
 
-          function openModal() {
-              clearMsg();
-              userInput.value = '';
-              passInput.value = '';
-              overlay.classList.add('open');
-              userInput.focus();
+          if (signoutBtn) {
+              signoutBtn.addEventListener('click', () => { etherdeckAuth.logout(); });
           }
 
-          function closeModal() {
-              overlay.classList.remove('open');
+          if (skipBtn) {
+              skipBtn.addEventListener('click', () => {
+                  // Persist skip per-account in localStorage so it survives page reloads
+                  const skipKey = 'email_skip_' + (etherdeckAuth.getUsername() || '');
+                  localStorage.setItem(skipKey, '1');
+                  const fs = document.getElementById('auth_fullscreen');
+                  if (fs) fs.hidden = true;
+                  const tabBar = document.getElementById('tab_bar');
+                  if (tabBar && tabBar.style.display !== 'none') switchTab('singleplayer');
+              });
           }
 
-          signinBtn.addEventListener('click', () => {
-              if (etherdeckAuth.isLoggedIn()) {
-                  etherdeckAuth.logout();
-              } else {
-                  openModal();
-              }
-          });
+          if (emailInp) {
+              emailInp.addEventListener('keydown', async e => {
+                  if (e.key !== 'Enter') return;
+                  const val = emailInp.value.trim();
+                  if (!val) { showEmailMsg('Please enter an email address.', true); return; }
+                  emailInp.disabled = true;
+                  const result = await etherdeckAuth.addEmail(val);
+                  if (result.success) {
+                      showEmailMsg('Email saved!', false);
+                      setTimeout(() => checkAuthState(), 600);
+                  } else {
+                      showEmailMsg(result.message, true);
+                  }
+                  emailInp.disabled = false;
+              });
+          }
 
-          overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
-          backBtn.addEventListener('click', closeModal);
-
-          passInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn.click(); });
-
-          loginBtn.addEventListener('click', async () => {
-              const u = userInput.value.trim();
-              const p = passInput.value;
-              if (!u || !p) { showMsg('Enter both username and password.', true); return; }
-              loginBtn.disabled = true;
-              loginBtn.textContent = 'Signing in…';
-              const result = await etherdeckAuth.login(u, p);
-              if (result.success) {
-                  showMsg('Signed in!', false);
-                  setTimeout(closeModal, 800);
-              } else {
-                  showMsg(result.message, true);
-              }
-              loginBtn.disabled = false;
-              loginBtn.textContent = 'Sign In';
-          });
-
-          registerBtn.addEventListener('click', async () => {
-              const u = userInput.value.trim();
-              const p = passInput.value;
-              if (!u || !p) { showMsg('Enter both username and password.', true); return; }
-              registerBtn.disabled = true;
-              registerBtn.textContent = 'Registering…';
-              const result = await etherdeckAuth.register(u, p);
-              if (result.success) {
-                  showMsg('Account created! You are now signed in.', false);
-                  setTimeout(closeModal, 1000);
-              } else {
-                  showMsg(result.message, true);
-              }
-              registerBtn.disabled = false;
-              registerBtn.textContent = 'Register';
-          });
-
-          // Initialise button label with saved session
-          etherdeckAuth.updateUI();
+          // Show auth screen on load
+          checkAuthState();
       }
       // ===== end EtherDeck Auth =====
+
+      // ===== Friends System =====
+      const FRIENDS_API = 'https://tjc.ngrok-free.app/friends.php';
+      let _friendsList   = [];
+      let _friendsUnread = {};
+      let _friendsChat   = { open: false, username: null, lastId: 0, pollTimer: null };
+      let _friendsPollTimer = null;
+      const FRIENDS_POLL_MS = 8000;
+
+      async function friendsRequest(action, data) {
+          try {
+              const r = await fetch(`${FRIENDS_API}?action=${action}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data)
+              });
+              return await r.json();
+          } catch (e) {
+              return { success: false, message: 'Network error: ' + e.message };
+          }
+      }
+
+      // Update user online status
+      async function friendsUpdateStatus(online, serverAddress, serverPort) {
+          const u = etherdeckAuth.getUsername();
+          if (!u) return;
+          await friendsRequest('update_status', {
+              username: u, online: online,
+              server_address: serverAddress || '', server_port: serverPort || 0
+          });
+      }
+
+      // Poll for friend data (requests, invites, unread, friend list)
+      async function friendsPoll() {
+          const u = etherdeckAuth.getUsername();
+          if (!u) return;
+          const r = await friendsRequest('poll', { username: u });
+          if (!r.success) return;
+          const d = r.data;
+          _friendsList   = d.friends      || [];
+          _friendsUnread = d.unread       || {};
+
+          // Update badge
+          const totalUnread    = Object.values(_friendsUnread).reduce((a, b) => a + b, 0);
+          const pendingRequests = (d.friend_requests || []).length;
+          const pendingInvites  = (d.invites        || []).length;
+          const badgeCount = totalUnread + pendingRequests + pendingInvites;
+          const badge = document.getElementById('friends_badge');
+          if (badge) {
+              badge.hidden = badgeCount === 0;
+              badge.textContent = badgeCount > 99 ? '99+' : badgeCount;
+          }
+
+          // Render friend requests
+          const reqSec  = document.getElementById('friends_requests_section');
+          const reqList = document.getElementById('friends_requests_list');
+          if (reqSec && reqList) {
+              reqSec.hidden = (d.friend_requests || []).length === 0;
+              reqList.innerHTML = '';
+              (d.friend_requests || []).forEach(req => {
+                  const row = document.createElement('div');
+                  row.className = 'friend-row';
+                  row.innerHTML = `
+                      <span class="friend-dot"></span>
+                      <span class="friend-name">${escHtml(req.from_username)}</span>
+                      <span class="friend-status">wants to be your friend</span>
+                      <div class="friend-actions">
+                          <button class="friend-btn-accept" onclick="friendsAccept('${escHtml(req.from_username)}')">Accept</button>
+                          <button class="friend-btn-decline" onclick="friendsDecline('${escHtml(req.from_username)}')">Decline</button>
+                      </div>`;
+                  reqList.appendChild(row);
+              });
+          }
+
+          // Render invites
+          const invSec  = document.getElementById('friends_invites_section');
+          const invList = document.getElementById('friends_invites_list');
+          if (invSec && invList) {
+              invSec.hidden = (d.invites || []).length === 0;
+              invList.innerHTML = '';
+              (d.invites || []).forEach(inv => {
+                  const row = document.createElement('div');
+                  row.className = 'invite-banner';
+                  row.innerHTML = `
+                      <span class="invite-banner-text"><strong>${escHtml(inv.from_username)}</strong> invited you to join their game!</span>
+                      <div class="friend-actions">
+                          <button class="friend-btn-accept" onclick="friendsAcceptInvite(${inv.id}, '${escHtml(inv.server_address)}', ${inv.server_port})">Join</button>
+                          <button class="friend-btn-decline" onclick="friendsDeclineInvite(${inv.id})">Ignore</button>
+                      </div>`;
+                  invList.appendChild(row);
+              });
+          }
+
+          // Render friends in the Friends tab (if open)
+          if (document.getElementById('tab_friends')?.style.display !== 'none') {
+              renderFriendsList();
+          }
+
+          // If chat panel is open, poll for new messages
+          if (_friendsChat.open && _friendsChat.username) {
+              friendsChatPollMessages();
+          }
+      }
+
+      function escHtml(s) {
+          return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      function renderFriendsList() {
+          const listEl  = document.getElementById('friends_list');
+          const countEl = document.getElementById('friends_count');
+          if (!listEl) return;
+          if (countEl) countEl.textContent = _friendsList.length ? `(${_friendsList.length})` : '';
+          if (_friendsList.length === 0) {
+              listEl.innerHTML = '<p class="friends-empty">No friends yet. Add someone above!</p>';
+              return;
+          }
+          listEl.innerHTML = '';
+          _friendsList.forEach(f => {
+              const unread = _friendsUnread[f.username] || 0;
+              const row = document.createElement('div');
+              row.className = 'friend-row';
+              const serverInfo = f.online && f.server_address
+                  ? `<span class="friend-status">Playing on ${escHtml(f.server_address)}</span>` 
+                  : `<span class="friend-status">${f.online ? 'Online' : 'Offline'}</span>`;
+              row.innerHTML = `
+                  <span class="friend-dot ${f.online ? 'online' : ''}"></span>
+                  <span class="friend-name">${escHtml(f.username)}</span>
+                  ${serverInfo}
+                  <div class="friend-actions">
+                      <button class="friend-btn-chat" onclick="openFriendChat('${escHtml(f.username)}')">
+                          Chat${unread ? ` <strong style="color:#ef4444">(${unread})</strong>` : ''}
+                      </button>
+                      <button class="friend-btn-remove" onclick="friendsRemove('${escHtml(f.username)}')">Remove</button>
+                  </div>`;
+              listEl.appendChild(row);
+          });
+      }
+
+      async function friendsRefresh() {
+          await friendsPoll();
+      }
+
+      async function friendsSendRequest() {
+          const inp = document.getElementById('friends_add_input');
+          const msg = document.getElementById('friends_add_msg');
+          const to  = inp ? inp.value.trim() : '';
+          if (!to) return;
+          const u = etherdeckAuth.getUsername();
+          if (!u) { if (msg) msg.textContent = 'You must be logged in.'; return; }
+          const r = await friendsRequest('send_request', { from_username: u, to_username: to });
+          if (msg) { msg.textContent = r.message; msg.style.color = r.success ? 'var(--accent2)' : '#ef4444'; }
+          if (r.success && inp) inp.value = '';
+          friendsPoll();
+      }
+
+      async function friendsAccept(fromUsername) {
+          const u = etherdeckAuth.getUsername(); if (!u) return;
+          await friendsRequest('accept_request', { username: u, from_username: fromUsername });
+          friendsPoll();
+      }
+
+      async function friendsDecline(fromUsername) {
+          const u = etherdeckAuth.getUsername(); if (!u) return;
+          await friendsRequest('decline_request', { username: u, from_username: fromUsername });
+          friendsPoll();
+      }
+
+      async function friendsRemove(friendUsername) {
+          if (!confirm(`Remove ${friendUsername} from friends?`)) return;
+          const u = etherdeckAuth.getUsername(); if (!u) return;
+          await friendsRequest('remove_friend', { username: u, friend_username: friendUsername });
+          friendsPoll();
+      }
+
+      // ─── Invites ────────────────────────────────────────────────────────────
+      async function friendsAcceptInvite(inviteId, serverAddress, serverPort) {
+          const u = etherdeckAuth.getUsername(); if (!u) return;
+          await friendsRequest('respond_invite', { username: u, invite_id: inviteId, response: 'accept' });
+          // Launch game connecting to that server
+          friendsPoll();
+          // Trigger multiplayer join flow
+          const playerNameInput = document.getElementById('player_name') || document.getElementById('multiplayer_username');
+          if (playerNameInput) playerNameInput.value = u;
+          // Use the join-code flow
+          const joinInput = document.getElementById('join_code_input');
+          if (joinInput) {
+              joinInput.value = `${serverAddress}:${serverPort}`;
+              const joinBtn = document.getElementById('join_code_launch');
+              if (joinBtn) joinBtn.click();
+          }
+      }
+
+      async function friendsDeclineInvite(inviteId) {
+          const u = etherdeckAuth.getUsername(); if (!u) return;
+          await friendsRequest('respond_invite', { username: u, invite_id: inviteId, response: 'decline' });
+          friendsPoll();
+      }
+
+      // ─── Chat Panel ─────────────────────────────────────────────────────────
+      function openFriendChat(username) {
+          _friendsChat.open     = true;
+          _friendsChat.username = username;
+          _friendsChat.lastId   = 0;
+          const overlay = document.getElementById('friend_chat_overlay');
+          const title   = document.getElementById('friend_chat_title');
+          const dot     = document.getElementById('friend_chat_dot');
+          const msgs    = document.getElementById('friend_chat_msgs');
+          if (title)  title.textContent = username;
+          const f = _friendsList.find(f => f.username === username);
+          if (dot) dot.className = 'friend-dot ' + (f?.online ? 'online' : '');
+          if (msgs) msgs.innerHTML = '';
+          if (overlay) overlay.classList.add('open');
+          friendsChatPollMessages();
+          document.getElementById('friend_chat_input')?.focus();
+      }
+
+      function closeFriendChat() {
+          _friendsChat.open     = false;
+          _friendsChat.username = null;
+          const overlay = document.getElementById('friend_chat_overlay');
+          if (overlay) overlay.classList.remove('open');
+      }
+
+      async function friendsChatPollMessages() {
+          if (!_friendsChat.open || !_friendsChat.username) return;
+          const u = etherdeckAuth.getUsername(); if (!u) return;
+          const r = await friendsRequest('get_messages', {
+              username: u, friend_username: _friendsChat.username, since_id: _friendsChat.lastId
+          });
+          if (!r.success || !r.data.length) return;
+          const msgsEl = document.getElementById('friend_chat_msgs');
+          r.data.forEach(m => {
+              if (m.id > _friendsChat.lastId) _friendsChat.lastId = m.id;
+              const div = document.createElement('div');
+              div.className = 'chat-msg ' + (m.from_username === u ? 'mine' : 'theirs');
+              const t = new Date(m.created_at + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              div.innerHTML = `${escHtml(m.message)}<div class="chat-msg-time">${t}</div>`;
+              if (msgsEl) msgsEl.appendChild(div);
+          });
+          if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+          // Clear unread for this friend
+          delete _friendsUnread[_friendsChat.username];
+      }
+
+      async function sendFriendMessage() {
+          const inp = document.getElementById('friend_chat_input');
+          const msg = inp ? inp.value.trim() : '';
+          if (!msg || !_friendsChat.username) return;
+          const u = etherdeckAuth.getUsername(); if (!u) return;
+          inp.value = '';
+          const r = await friendsRequest('send_message', {
+              from_username: u, to_username: _friendsChat.username, message: msg
+          });
+          if (r.success) friendsChatPollMessages();
+      }
+
+      // Enter key in chat input
+      document.getElementById('friend_chat_input')?.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); sendFriendMessage(); }
+      });
+
+      // ─── Polling lifecycle ──────────────────────────────────────────────────
+      function startFriendsPoll() {
+          if (_friendsPollTimer) clearInterval(_friendsPollTimer);
+          if (!etherdeckAuth.isLoggedIn()) return;
+          friendsUpdateStatus(true);
+          friendsPoll();
+          _friendsPollTimer = setInterval(() => {
+              if (!etherdeckAuth.isLoggedIn()) { stopFriendsPoll(); return; }
+              friendsUpdateStatus(true);
+              friendsPoll();
+          }, FRIENDS_POLL_MS);
+      }
+
+      function stopFriendsPoll() {
+          if (_friendsPollTimer) { clearInterval(_friendsPollTimer); _friendsPollTimer = null; }
+          friendsUpdateStatus(false);
+      }
+
+      // Start polling once the launcher is ready (auth state confirmed)
+      const _origCheckAuthState = checkAuthState;
+      checkAuthState = function() {
+          _origCheckAuthState();
+          if (etherdeckAuth.isLoggedIn() && !_friendsPollTimer) {
+              startFriendsPoll();
+          } else if (!etherdeckAuth.isLoggedIn()) {
+              stopFriendsPoll();
+          }
+      };
+
+      // Stop poll on sign-out, start on sign-in
+      const _origLogout = etherdeckAuth.logout.bind(etherdeckAuth);
+      etherdeckAuth.logout = function() {
+          stopFriendsPoll();
+          _origLogout();
+      };
+      // ===== end Friends System =====
 
       const mtl = new MinetestLauncher();
       mtl.addPacks(args.packs);
