@@ -355,7 +355,7 @@ if ($action === 'send_invite') {
     $addr = trim($data['server_address'] ?? '');
     $port = (int)($data['server_port']   ?? 0);
 
-    if (empty($from) || empty($to) || empty($addr) || !$port) response(false, 'Missing fields');
+    if (empty($from) || empty($to) || empty($addr)) response(false, 'Missing fields');
     if (!areFriends($db, $from, $to)) response(false, 'Not friends');
 
     // Remove any existing pending invite from this sender to this recipient

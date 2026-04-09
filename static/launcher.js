@@ -141,6 +141,9 @@ canvas.emscripten {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
     transform: translateX(100%);
     transition: transform 0.26s cubic-bezier(0.32,0.72,0,1);
     padding: max(14px, env(safe-area-inset-top)) 0 max(14px, env(safe-area-inset-bottom));
@@ -262,8 +265,8 @@ canvas.emscripten {
 #join_code_banner .jcb-copy-hint { font-size: 10px; color: #34d399; flex-shrink: 0; font-weight: 700; }
 
 /* ── Friends list in slide-out ───────────────────────── */
-#sm_friends_section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 12px 16px; }
-.sm-friends-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1 1 auto; margin-top: 6px; }
+#sm_friends_section { flex-shrink: 0; padding: 12px 16px; }
+.sm-friends-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
 .sm-friend-row {
     display: flex;
     align-items: center;
@@ -557,7 +560,7 @@ function renderSideMenuFriends() {
     all.forEach(f => {
         const div = document.createElement('div');
         div.className = 'sm-friend-row';
-        const canInvite = f.online && joinCodeUrl;
+        const canInvite = !!(joinCodeUrl || window._currentDirectServer);
         div.innerHTML = `
           <span class="sm-friend-dot ${f.online ? 'online' : ''}"></span>
           <div style="flex:1;min-width:0;">
@@ -577,25 +580,20 @@ function _smEsc(s) {
 }
 
 async function smInviteFriend(username) {
-    if (!joinCodeUrl || typeof friendsRequest === 'undefined') return;
+    const directServer = window._currentDirectServer;
+    const hasInvite = joinCodeUrl || directServer;
+    if (!hasInvite || typeof friendsRequest === 'undefined') return;
     const u = (typeof etherdeckAuth !== 'undefined') ? etherdeckAuth.getUsername() : null;
     if (!u) return;
-    // Parse address and port from the join URL
-    try {
-        const url = new URL(joinCodeUrl);
-        const addr   = url.searchParams.get('address') || url.hostname;
-        const port   = parseInt(url.searchParams.get('port') || url.port || '30000');
-        await friendsRequest('send_invite', {
-            from_username: u, to_username: username,
-            server_address: addr, server_port: port
-        });
-    } catch (_) {
-        // If it's not a URL, just send the raw string as address
-        await friendsRequest('send_invite', {
-            from_username: u, to_username: username,
-            server_address: joinCodeUrl, server_port: 30000
-        });
+    let invitePayload;
+    if (joinCodeUrl) {
+        // P2P hosted game — store the full join URL
+        invitePayload = { from_username: u, to_username: username, server_address: joinCodeUrl, server_port: 0 };
+    } else {
+        // Discover server — store the real address + port
+        invitePayload = { from_username: u, to_username: username, server_address: directServer.address, server_port: directServer.port };
     }
+    await friendsRequest('send_invite', invitePayload);
     // Brief feedback
     const list = document.getElementById('sm_friends_list');
     if (list) {

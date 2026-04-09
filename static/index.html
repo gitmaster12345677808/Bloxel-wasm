@@ -759,6 +759,7 @@
             .friend-actions button { min-height: 30px; padding: 0 12px; font-size: 0.8rem; font-weight: 700; border-radius: 8px; cursor: pointer; }
             .friend-btn-chat { background: var(--subtle); border: 1px solid var(--panel-border); color: var(--text); }
             .friend-btn-remove { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+            .friend-btn-join { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
             .friend-btn-accept { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
             .friend-btn-decline { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
             .friends-empty { color: var(--muted); font-size: 0.88rem; font-style: italic; padding: 8px 0; }
@@ -1820,6 +1821,9 @@
               joinArgs.port = parseInt(server.port);
               joinArgs.go = true;
               mtl.launch(joinArgs);
+              // Let friends see which server you joined
+              window._currentDirectServer = { address: server.address, port: parseInt(server.port) };
+              setTimeout(() => friendsUpdateStatus(true, server.address, parseInt(server.port)), 800);
           }
 
           function renderServerList(servers) {
@@ -2469,11 +2473,17 @@
               const serverInfo = f.online && f.server_address
                   ? `<span class="friend-status">Playing on ${escHtml(f.server_address)}</span>` 
                   : `<span class="friend-status">${f.online ? 'Online' : 'Offline'}</span>`;
+              // Show a Join button only for direct (non-P2P) servers — P2P URLs contain '?join='
+              const isDirectServer = f.online && f.server_address && !f.server_address.includes('?join=') && !f.server_address.includes('://');
+              const joinBtn = isDirectServer
+                  ? `<button class="friend-btn-join" onclick="joinServer({address:'${escHtml(f.server_address)}',port:${parseInt(f.server_port)||30000}})">Join</button>`
+                  : '';
               row.innerHTML = `
                   <span class="friend-dot ${f.online ? 'online' : ''}"></span>
                   <span class="friend-name">${escHtml(f.username)}</span>
                   ${serverInfo}
                   <div class="friend-actions">
+                      ${joinBtn}
                       <button class="friend-btn-chat" onclick="openFriendChat('${escHtml(f.username)}')">
                           Chat${unread ? ` <strong style="color:#ef4444">(${unread})</strong>` : ''}
                       </button>
@@ -2523,17 +2533,25 @@
       async function friendsAcceptInvite(inviteId, serverAddress, serverPort) {
           const u = etherdeckAuth.getUsername(); if (!u) return;
           await friendsRequest('respond_invite', { username: u, invite_id: inviteId, response: 'accept' });
-          // Launch game connecting to that server
           friendsPoll();
-          // Trigger multiplayer join flow
-          const playerNameInput = document.getElementById('player_name') || document.getElementById('multiplayer_username');
+          // Pre-fill the player name
+          const playerNameInput = document.getElementById('multiplayer_username') || document.getElementById('player_name');
           if (playerNameInput) playerNameInput.value = u;
-          // Use the join-code flow
-          const joinInput = document.getElementById('join_code_input');
-          if (joinInput) {
-              joinInput.value = `${serverAddress}:${serverPort}`;
-              const joinBtn = document.getElementById('join_code_launch');
-              if (joinBtn) joinBtn.click();
+
+          // Detect whether this is a P2P join URL (contains ?join=) or a direct server address
+          const isP2P = serverAddress.includes('?join=') || serverAddress.includes('://');
+          if (isP2P) {
+              // Feed the full join URL into the join-code input — parseJoinCode handles it
+              const joinInput = document.getElementById('join_code_input');
+              if (joinInput) {
+                  joinInput.value = serverAddress;
+                  const joinBtn = document.getElementById('join_code_launch');
+                  if (joinBtn) joinBtn.click();
+              }
+          } else {
+              // Direct discover-server address — use joinServer() directly
+              switchTab('multiplayer');
+              joinServer({ address: serverAddress, port: serverPort || 30000 });
           }
       }
 

@@ -60,6 +60,8 @@ apply_substitutions htaccess_release "$RELEASE_DIR"/.htaccess
 apply_substitutions launcher.js "$RELEASE_DIR"/launcher.js
 apply_substitutions worker.js "$RELEASE_DIR"/worker.js
 apply_substitutions htaccess_packs "$PACKS_DIR"/.htaccess
+cp auth.php    "$WWW_DIR"/auth.php
+cp friends.php "$WWW_DIR"/friends.php
 popd
 
 # Copy base file system pack
