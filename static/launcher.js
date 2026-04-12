@@ -264,6 +264,39 @@ canvas.emscripten {
 #join_code_text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; min-width: 0; }
 #join_code_banner .jcb-copy-hint { font-size: 10px; color: #34d399; flex-shrink: 0; font-weight: 700; }
 
+/* ── Voice panel in slide-out menu ──────────────────── */
+#sm_voice_panel {
+    display: none;
+    margin-top: 8px;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    height: 0;
+    transition: height 0.25s ease;
+    border: 1px solid rgba(90,160,255,0.2);
+    border-bottom: none;
+}
+#sm_voice_panel.open {
+    display: block;
+    height: 280px;
+}
+#sm_voice_resize {
+    display: none;
+    height: 10px;
+    background: rgba(90,160,255,0.12);
+    border: 1px solid rgba(90,160,255,0.2);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    cursor: ns-resize;
+    text-align: center;
+    line-height: 10px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    user-select: none;
+    flex-shrink: 0;
+}
+#sm_voice_resize::after { content: '\\2015\\2015\\2015'; letter-spacing: 2px; }
+#sm_voice_panel.open + #sm_voice_resize { display: block; }
+
 /* ── Friends list in slide-out ───────────────────────── */
 #sm_friends_section { flex-shrink: 0; padding: 12px 16px; }
 .sm-friends-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
@@ -367,6 +400,11 @@ canvas.emscripten {
 }
 #progressbar { width: 100%; height: 12px; }
 
+/* ── Y-menu theater button (mobile/touch only) ───────── */
+@media (pointer: coarse) {
+    #ymenu_theater_btn { display: flex !important; }
+}
+
 /* ── Console ─────────────────────────────────────────── */
 .console {
     position: absolute;
@@ -396,6 +434,9 @@ const rtHTML = `
       <span class="smb-badge" id="smb_badge" hidden></span>
     </button>
 
+    <!-- Y-menu / theater button (touch devices) -->
+    <button id="ymenu_theater_btn" onclick="window._yMenuTheater && window._yMenuTheater.toggle()" title="Video Theater [Y]" style="position:absolute;left:max(10px,env(safe-area-inset-left));top:50%;transform:translateY(-50%);z-index:100;width:44px;height:44px;border-radius:12px;background:rgba(8,22,52,0.82);border:1px solid rgba(90,160,255,0.3);border-top-color:rgba(180,218,255,0.45);color:#f4f7fb;font-size:20px;font-family:inherit;cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">&#x1F4FA;</button>
+
     <!-- Backdrop -->
     <div id="side_menu_backdrop" onclick="closeSideMenu()"></div>
 
@@ -414,7 +455,9 @@ const rtHTML = `
           <span class="jcb-copy-hint">&#x2398;&#160;Copy</span>
         </div>
         <button class="sm-btn green" onclick="openChatOverlay()">&#x1F4AC; Game Chat</button>
-        <button class="sm-btn" onclick="openVoiceWindow()">&#x1F3A4; Voice Chat</button>
+        <button class="sm-btn" id="sm_voice_btn" onclick="openVoiceWindow()">&#x1F3A4; Voice Chat</button>
+        <div id="sm_voice_panel"></div>
+        <div id="sm_voice_resize" onmousedown="_voicePanelResizeStart(event)" ontouchstart="_voicePanelResizeStart(event)"></div>
       </div>
 
       <!-- Display -->
@@ -662,27 +705,110 @@ function closeChatOverlay() {
     mtCanvas.focus();
 }
 
-let _voicePopup = null;
 let _voicePlayerName = 'Player';
+let _voiceRoom = 'bloxelvoice';
+
+// ── Voice-room helper ──────────────────────────────────────────────────────
+function _sanitizeVoiceRoom(str) {
+    // Jitsi room names: lowercase alphanumeric + hyphens, max 64 chars
+    return str.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 64) || 'bloxelvoice';
+}
+
+function _getVoiceRoom() {
+    return _voiceRoom;
+}
+
+function _autoJoinVoice() {
+    // Silently connect to voice in the background without showing any UI
+    const room = _getVoiceRoom();
+    const name = _voicePlayerName || 'Player';
+    const params = 'config.prejoinPageEnabled=false' +
+        '&config.prejoinConfig.enabled=false' +
+        '&config.startWithVideoMuted=true' +
+        '&config.startWithAudioMuted=false' +
+        '&config.disableDeepLinking=true' +
+        '&config.hideWatermark=true' +
+        '&config.toolbarButtons=' + encodeURIComponent(JSON.stringify(['microphone', 'hangup'])) +
+        '&config.displayName=' + encodeURIComponent(JSON.stringify(name)) +
+        '&userInfo.displayName=' + encodeURIComponent(JSON.stringify(name));
+    const iframe = document.createElement('iframe');
+    iframe.id = 'voice_bg_iframe';
+    iframe.allow = 'microphone; camera; display-capture; fullscreen; speaker-selection';
+    iframe.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;border:none;';
+    iframe.src = _VC_ORIGIN + '/' + room + '#' + params;
+    document.body.appendChild(iframe);
+}
 
 function openVoiceWindow() {
-    const JITSI_HOST = 'voip.ngrok.pro';
-    const JITSI_ROOM = 'FurrianEmpire';
-    const dn = encodeURIComponent(_voicePlayerName);
-    const url = 'https://' + JITSI_HOST + '/' + JITSI_ROOM
-        + '#userInfo.displayName=' + dn
-        + '&config.prejoinPageEnabled=false'
-        + '&config.prejoinConfig.enabled=false'
-        + '&config.startWithVideoMuted=true'
-        + '&config.startWithAudioMuted=false'
-        + '&config.disableDeepLinking=true';
-    if (_voicePopup && !_voicePopup.closed) {
-        _voicePopup.focus();
+    const panel = document.getElementById('sm_voice_panel');
+    const btn   = document.getElementById('sm_voice_btn');
+    if (!panel) return;
+    const isOpen = panel.classList.contains('open');
+    if (isOpen) {
+        panel.classList.remove('open');
+        if (btn) btn.textContent = '\uD83C\uDFA4 Voice Chat';
     } else {
-        _voicePopup = window.open(url, 'bloxel_voice',
-            'width=960,height=720,resizable=yes,scrollbars=no');
+        if (!panel.querySelector('iframe')) {
+            // If already auto-joined in background, move that iframe into the panel
+            const bg = document.getElementById('voice_bg_iframe');
+            if (bg) {
+                bg.style.cssText = 'width:100%;height:100%;border:none;';
+                bg.removeAttribute('id');
+                panel.appendChild(bg);
+            } else {
+                const room   = _getVoiceRoom();
+                const name   = _voicePlayerName || 'Player';
+                const params = 'config.prejoinPageEnabled=false' +
+                    '&config.prejoinConfig.enabled=false' +
+                    '&config.startWithVideoMuted=true' +
+                    '&config.startWithAudioMuted=false' +
+                    '&config.disableDeepLinking=true' +
+                    '&config.hideWatermark=true' +
+                    '&config.toolbarButtons=' + encodeURIComponent(JSON.stringify(['microphone', 'hangup'])) +
+                    '&config.displayName=' + encodeURIComponent(JSON.stringify(name)) +
+                    '&userInfo.displayName=' + encodeURIComponent(JSON.stringify(name));
+                const iframe = document.createElement('iframe');
+                iframe.allow = 'microphone; camera; display-capture; fullscreen; speaker-selection';
+                iframe.style.cssText = 'width:100%;height:100%;border:none;';
+                iframe.src = _VC_ORIGIN + '/' + room + '#' + params;
+                panel.appendChild(iframe);
+            }
+        }
+        panel.classList.add('open');
+        if (btn) btn.textContent = '\uD83C\uDFA4 Voice Chat  \u25B2';
+        openSideMenu();
     }
 }
+
+function _voicePanelResizeStart(e) {
+    const panel = document.getElementById('sm_voice_panel');
+    if (!panel) return;
+    e.preventDefault();
+    const startY  = e.touches ? e.touches[0].clientY : e.clientY;
+    const startH  = panel.offsetHeight;
+    panel.style.transition = 'none';
+    function onMove(ev) {
+        const y = ev.touches ? ev.touches[0].clientY : ev.clientY;
+        const newH = Math.max(120, startH + (y - startY));
+        panel.style.height = newH + 'px';
+    }
+    function onUp() {
+        panel.style.transition = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend',  onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend',  onUp);
+}
+
+// ── VoiceChat — Jitsi iframe (embedded in slide-out menu) ────────────────
+const _VC_ORIGIN = 'https://servers.etherdeck.org:5384';
+
+
 
 function sendChatMessage() {
     const text = chatInput ? chatInput.value : '';
@@ -894,6 +1020,8 @@ function activateBody() {
     progressBar = document.getElementById('progressbar');
     progressBarDiv = document.getElementById('progressbar_div');
     updateProgressBar(0, 0);
+
+    _initYMenuTheater();
 }
 
 var PB_bytes_downloaded = 0;
@@ -1578,8 +1706,19 @@ class MinetestLauncher {
         this.addPacks(this.args.packs);
         // Capture player name for voice chat before DOM is wiped
         if (this.args.name) _voicePlayerName = this.args.name;
+        // Derive per-server voice room: join-code URL takes priority (friend server),
+        // otherwise use the server's IP address (discover server)
+        if (joinCodeUrl) {
+            _voiceRoom = _sanitizeVoiceRoom(joinCodeUrl);
+        } else if (this.args.address) {
+            _voiceRoom = _sanitizeVoiceRoom(this.args.address);
+        } else {
+            _voiceRoom = 'bloxelvoice';
+        }
         activateBody();
         fixGeometry();
+        // Auto-join voice in background so mic is live without opening the panel
+        _autoJoinVoice();
         if (this.minetestConf.size > 0) {
             const contents = this.#renderMinetestConf();
             console.log("minetest.conf is: ", contents);
@@ -1603,8 +1742,6 @@ class MinetestLauncher {
             irrlicht_force_pointerlock();
         }
         mtScheduler.setCondition("launch_called");
-        // Auto-open voice chat popup when the game launches
-        openVoiceWindow();
     }
 }
 
@@ -1714,7 +1851,8 @@ class WebXRManager {
 
             this._session = await navigator.xr.requestSession('immersive-vr', {
                 requiredFeatures: ['local-floor'],
-                optionalFeatures: ['bounded-floor', 'hand-tracking'],
+                optionalFeatures: ['bounded-floor', 'hand-tracking', 'dom-overlay'],
+                domOverlay: { root: document.getElementById('canvas_container') },
             });
 
             this._xrLayer = new XRWebGLLayer(this._session, gl, {
@@ -2265,6 +2403,9 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
             gl.bindTexture(gl.TEXTURE_2D, null);
         }
 
+        // Video panel texture (WebXR theater — second screen)
+        this._videoTex = this._mkTex(gl, 4, 4);
+
         // Restore GL state so Irrlicht's cache stays in sync.
         gl.bindTexture(gl.TEXTURE_2D, _sT0);
         gl.activeTexture(_sAT);
@@ -2415,7 +2556,9 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
 
     _redrawMenuPanel() {
         if (!this._mCtx) return;
-        if (this._chatMode) { this._redrawChatPanel(); return; }
+        if (this._chatMode)       { this._redrawChatPanel();     return; }
+        if (this._vrVideoUrlMode) { this._redrawVideoUrlPanel(); return; }
+        if (this._vrVideoMode)    { this._redrawVideoPanel();    return; }
         const ctx = this._mCtx;
         const CW = this._mCanvas.width, CH = this._mCanvas.height;
         ctx.clearRect(0, 0, CW, CH);
@@ -2442,7 +2585,8 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
             { label: 'Drop Item',  action: 'drop'      },
             { label: 'Close',      action: 'close'     },
             { label: '💬  Chat',   action: 'chat'      },  // full-width 3rd row
-            { label: '🎤  Voice',  action: 'voice'     },  // full-width 4th row
+            { label: '🎤  Voice',   action: 'voice'    },  // full-width 5th row
+            { label: '📺  Theater', action: 'theater'  },  // full-width 6th row
         ];
         this._ymenuButtons = [];
         const bW = 440, bH = 82, gapX = 20, gapY = 14;
@@ -2537,6 +2681,18 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
         // ── 2. Upload menu panel canvas → menuTex ─────────────────────────────
         this._uploadCanvas(gl, this._menuTex, this._mCanvas);
 
+        // ── 2b. Upload video frame → videoTex (if theater is active) ──────────
+        const _ytVid = window._yMenuTheater?._videoEl;
+        const _ytHasVideo = _ytVid && _ytVid.readyState >= 2 && !_ytVid.paused && !_ytVid.ended;
+        if (_ytHasVideo && this._videoTex) {
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this._videoTex);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, _ytVid); } catch (_e) {}
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+            gl.bindTexture(gl.TEXTURE_2D, null);
+        }
+
         // ── 3. Controller ray hit-test ────────────────────────────────────────
         // Right controller checks menu panel first; if it misses, checks game
         // screen and moves the game's mouse cursor there instead.
@@ -2563,7 +2719,10 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
                 const mhit = this._rayHit(origin, dir,
                     MENU_CX, MENU_CY, MENU_Z, MENU_HW, MENU_HH);
                 if (mhit) {
-                    const panelBtns = this._chatMode ? this._chatBtns : this._ymenuButtons;
+                    const panelBtns = this._chatMode       ? this._chatBtns
+                                     : this._vrVideoUrlMode ? (this._vrUrlButtons   || [])
+                                     : this._vrVideoMode    ? (this._vrVideoButtons || [])
+                                     : this._ymenuButtons;
                     for (let bi = 0; bi < panelBtns.length; bi++) {
                         const btn = panelBtns[bi];
                         if (mhit.u >= btn.u0 && mhit.u <= btn.u1 &&
@@ -2602,6 +2761,18 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
                 this._redrawMenuPanel();
                 this._uploadCanvas(gl, this._menuTex, this._mCanvas);
             }
+        } else if (this._vrVideoUrlMode) {
+            if (newHover !== this._vrUrlHovered) {
+                this._vrUrlHovered = newHover;
+                this._redrawMenuPanel();
+                this._uploadCanvas(gl, this._menuTex, this._mCanvas);
+            }
+        } else if (this._vrVideoMode) {
+            if (newHover !== this._vrVideoHovered) {
+                this._vrVideoHovered = newHover;
+                this._redrawMenuPanel();
+                this._uploadCanvas(gl, this._menuTex, this._mCanvas);
+            }
         } else {
             if (newHover !== this._ymenuHovered) {
                 this._ymenuHovered = newHover;
@@ -2635,6 +2806,14 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
             // Game screen
             this._drawQuad(gl, this._gameTex,
                 this._m4mul(pv, this._m4quad(GAME_CX, GAME_CY, GAME_Z, GAME_HW, GAME_HH)));
+
+            // Video screen — to the right of the game screen when theater is playing
+            if (_ytHasVideo && this._videoTex) {
+                const VCX = GAME_HW * 2.0 + 0.3 + GAME_HW * 0.8;
+                const VHW = GAME_HW * 0.8, VHH = GAME_HH * 0.8;
+                this._drawQuad(gl, this._videoTex,
+                    this._m4mul(pv, this._m4quad(VCX, GAME_CY, GAME_Z, VHW, VHH)));
+            }
 
             // Menu panel
             this._drawQuad(gl, this._menuTex,
@@ -2716,6 +2895,60 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
             }, 0);
         } else if (action === 'chat') {
             this._openVRChat();
+        } else if (action === 'theater') {
+            // In VR we can't show the DOM overlay — open a native canvas video picker instead
+            this._vrVideoMode    = true;
+            this._vrVideoList    = null;   // null = still loading
+            this._vrVideoHovered = -1;
+            this._vrVideoButtons = [];
+            this._redrawMenuPanel();
+            this._fetchVRVideoList();
+        } else if (action === 'video_enter_url') {
+            this._vrVideoUrlMode = true;
+            this._vrUrlText      = '';
+            this._vrUrlHovered   = -1;
+            this._vrUrlButtons   = [];
+            this._redrawMenuPanel();
+            this._openVRUrlInput();
+        } else if (action === 'video_url_play') {
+            const url = this._vrUrlText?.trim();
+            this._closeVRUrlInput();
+            if (url && /^https?:\/\//i.test(url)) {
+                if (!window._yMenuTheater) _initYMenuTheater();
+                window._yMenuTheater?._playVideo(url, url);
+                this._vrVideoMode    = false;
+                this._vrVideoHovered = -1;
+            }
+            this._redrawMenuPanel();
+        } else if (action === 'video_url_cancel') {
+            this._closeVRUrlInput();
+            this._redrawMenuPanel();
+        } else if (action === 'video_pause') {
+            const vid = window._yMenuTheater?._videoEl;
+            if (vid) { if (vid.paused) vid.play(); else vid.pause(); }
+            this._redrawMenuPanel();
+        } else if (action === 'video_vol_dn') {
+            const vid = window._yMenuTheater?._videoEl;
+            if (vid) vid.volume = Math.max(0, vid.volume - 0.1);
+            this._redrawMenuPanel();
+        } else if (action === 'video_vol_up') {
+            const vid = window._yMenuTheater?._videoEl;
+            if (vid) vid.volume = Math.min(1, vid.volume + 0.1);
+            this._redrawMenuPanel();
+        } else if (action === 'video_back') {
+            this._vrVideoMode    = false;
+            this._vrVideoHovered = -1;
+            this._redrawMenuPanel();
+        } else if (action.startsWith('video_')) {
+            const idx = parseInt(action.slice(6), 10);
+            const v   = this._vrVideoList?.[idx];
+            if (v) {
+                if (!window._yMenuTheater) _initYMenuTheater();
+                window._yMenuTheater?._playVideo(v.url, v.title);
+            }
+            this._vrVideoMode    = false;
+            this._vrVideoHovered = -1;
+            this._redrawMenuPanel();
         } else if (action === 'voice') {
             if (typeof openVoiceWindow === 'function') openVoiceWindow();
         } else if (action === 'chat_send') {
@@ -2780,6 +3013,407 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
         // client->typeChatMessage(), which bypasses the key system and works
         // even when inventory or other formspecs are open.
         webxr_queue_chat_message(text);
+    }
+
+    // ── VR video picker panel (canvas-drawn, shown in headset) ───────────────
+
+    _redrawVideoPanel() {
+        const ctx = this._mCtx;
+        const CW = this._mCanvas.width, CH = this._mCanvas.height;
+        ctx.clearRect(0, 0, CW, CH);
+
+        // Background
+        ctx.fillStyle = 'rgba(6, 10, 30, 0.97)';
+        ctx.beginPath();
+        ctx.roundRect(4, 4, CW - 8, CH - 8, 18);
+        ctx.fill();
+        ctx.strokeStyle = '#2a5090';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Title
+        ctx.fillStyle = '#88ccff';
+        ctx.font = 'bold 44px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('\uD83D\uDCFA  Video Theater', CW / 2, 22);
+
+        this._vrVideoButtons = [];
+        const videos = this._vrVideoList;
+
+        if (videos === null) {
+            // Loading state
+            ctx.fillStyle = '#6a9ac8';
+            ctx.font = 'italic 30px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Loading videos\u2026', CW / 2, CH / 2);
+        } else if (videos.length === 0) {
+            ctx.fillStyle = '#5a7a9a';
+            ctx.font = 'italic 28px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('No videos available yet.', CW / 2, CH / 2 - 20);
+            ctx.font = '22px system-ui, sans-serif';
+            ctx.fillText('Submit one via desktop or mobile.', CW / 2, CH / 2 + 22);
+        } else {
+            // Video rows — up to 5 rows visible
+            const MAX   = 5;
+            const rH    = 64, rGap = 8;
+            const rX    = 30, rW  = CW - 60;
+            const startY = 82;
+            const shown = videos.slice(0, MAX);
+            for (let i = 0; i < shown.length; i++) {
+                const v     = shown[i];
+                const ry    = startY + i * (rH + rGap);
+                const hover = this._vrVideoHovered === i;
+                ctx.fillStyle   = hover ? 'rgba(40,90,180,0.6)' : 'rgba(20,40,90,0.55)';
+                ctx.strokeStyle = hover ? '#66b8ff' : '#2a5090';
+                ctx.lineWidth   = hover ? 2.5 : 1.5;
+                ctx.beginPath();
+                ctx.roundRect(rX, ry, rW, rH, 10);
+                ctx.fill();
+                ctx.stroke();
+
+                // Source badge
+                const badge   = v.src === 'friend' ? '\uD83D\uDC65' : '\uD83C\uDF10';
+                const badgeW  = 40;
+                ctx.fillStyle = hover ? '#ffffff' : '#c8e0ff';
+                ctx.font      = '26px system-ui, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(badge, rX + 12, ry + rH / 2);
+
+                // Title (clipped)
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(rX + 12 + badgeW, ry + 4, rW - badgeW - 20, rH - 8);
+                ctx.clip();
+                ctx.fillStyle = hover ? '#ffffff' : '#ddeeff';
+                ctx.font      = 'bold 26px system-ui, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(v.title || v.url, rX + 12 + badgeW, ry + rH / 2);
+                ctx.restore();
+
+                this._vrVideoButtons.push({
+                    action: 'video_' + i,
+                    u0: rX / CW, v0: ry / CH,
+                    u1: (rX + rW) / CW, v1: (ry + rH) / CH,
+                });
+            }
+        }
+
+        // Control row: ⏸/▶ pause + Vol- + Vol+ (only when a video is playing)
+        const theater = window._yMenuTheater;
+        const isPlaying = theater && theater._videoEl && !theater._videoEl.paused;
+        const hasVideo  = theater && theater._videoEl && theater._videoEl.readyState >= 1;
+        if (hasVideo) {
+            const cY = CH - 168, cH = 60;
+            const cTotalW = CW - 60, cGap = 12;
+            const pauseW = Math.round((cTotalW - cGap * 2) * 0.36);
+            const volDnW  = Math.round((cTotalW - cGap * 2) * 0.32);
+            const volUpW  = cTotalW - cGap * 2 - pauseW - volDnW;
+            const pX  = 30;
+            const vdX = pX + pauseW + cGap;
+            const vuX = vdX + volDnW + cGap;
+
+            const drawCtrlBtn = (x, w, label, col1, col2, colTxt, idx) => {
+                const h = this._vrVideoHovered === idx;
+                ctx.fillStyle   = h ? col2 : col1;
+                ctx.strokeStyle = h ? colTxt : col2;
+                ctx.lineWidth   = h ? 2.5 : 1.5;
+                ctx.beginPath();
+                ctx.roundRect(x, cY, w, cH, 10);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle    = h ? '#ffffff' : colTxt;
+                ctx.font         = 'bold 26px system-ui, sans-serif';
+                ctx.textAlign    = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(label, x + w / 2, cY + cH / 2);
+                this._vrVideoButtons.push({
+                    action: 'video_ctrl_' + ['pause', 'vol_dn', 'vol_up'][idx - this._vrVideoButtons.length],
+                    u0: x / CW, v0: cY / CH,
+                    u1: (x + w) / CW, v1: (cY + cH) / CH,
+                });
+            };
+
+            const ctrlBase = this._vrVideoButtons.length;
+            // Pause/play button
+            const phover = this._vrVideoHovered === ctrlBase;
+            ctx.fillStyle   = phover ? 'rgba(30,80,150,0.9)' : 'rgba(18,50,120,0.75)';
+            ctx.strokeStyle = phover ? '#88ccff' : '#3060a0';
+            ctx.lineWidth   = phover ? 2.5 : 1.5;
+            ctx.beginPath();
+            ctx.roundRect(pX, cY, pauseW, cH, 10);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle    = phover ? '#ffffff' : '#b8d8ff';
+            ctx.font         = 'bold 26px system-ui, sans-serif';
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(isPlaying ? '⏸ Pause' : '▶ Play', pX + pauseW / 2, cY + cH / 2);
+            this._vrVideoButtons.push({ action: 'video_pause', u0: pX / CW, v0: cY / CH, u1: (pX + pauseW) / CW, v1: (cY + cH) / CH });
+
+            // Vol- button
+            const vdhover = this._vrVideoHovered === ctrlBase + 1;
+            ctx.fillStyle   = vdhover ? 'rgba(50,30,80,0.9)' : 'rgba(30,18,60,0.75)';
+            ctx.strokeStyle = vdhover ? '#cc88ff' : '#7040a0';
+            ctx.lineWidth   = vdhover ? 2.5 : 1.5;
+            ctx.beginPath();
+            ctx.roundRect(vdX, cY, volDnW, cH, 10);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle    = vdhover ? '#ffffff' : '#d8b8ff';
+            ctx.font         = 'bold 26px system-ui, sans-serif';
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🔉 Vol−', vdX + volDnW / 2, cY + cH / 2);
+            this._vrVideoButtons.push({ action: 'video_vol_dn', u0: vdX / CW, v0: cY / CH, u1: (vdX + volDnW) / CW, v1: (cY + cH) / CH });
+
+            // Vol+ button
+            const vuhover = this._vrVideoHovered === ctrlBase + 2;
+            ctx.fillStyle   = vuhover ? 'rgba(50,30,80,0.9)' : 'rgba(30,18,60,0.75)';
+            ctx.strokeStyle = vuhover ? '#cc88ff' : '#7040a0';
+            ctx.lineWidth   = vuhover ? 2.5 : 1.5;
+            ctx.beginPath();
+            ctx.roundRect(vuX, cY, volUpW, cH, 10);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle    = vuhover ? '#ffffff' : '#d8b8ff';
+            ctx.font         = 'bold 26px system-ui, sans-serif';
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🔊 Vol+', vuX + volUpW / 2, cY + cH / 2);
+            this._vrVideoButtons.push({ action: 'video_vol_up', u0: vuX / CW, v0: cY / CH, u1: (vuX + volUpW) / CW, v1: (cY + cH) / CH });
+        }
+
+        // Bottom row: "Enter URL" + "Back" buttons
+        const bY = CH - 84, bH = 68;
+        const totalBW = CW - 60, gap = 16;
+        const urlBtnW = Math.round((totalBW - gap) * 0.58);
+        const bakBtnW = totalBW - gap - urlBtnW;
+        const urlBtnX = 30;
+        const bakBtnX = urlBtnX + urlBtnW + gap;
+
+        // "Enter URL" button
+        const urlBtnIdx = this._vrVideoButtons.length;
+        const uhover = this._vrVideoHovered === urlBtnIdx;
+        ctx.fillStyle   = uhover ? 'rgba(0,80,60,0.9)'  : 'rgba(0,50,38,0.75)';
+        ctx.strokeStyle = uhover ? '#33ffcc' : '#00a884';
+        ctx.lineWidth   = uhover ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(urlBtnX, bY, urlBtnW, bH, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle    = uhover ? '#ffffff' : '#80ffd8';
+        ctx.font         = 'bold 28px system-ui, sans-serif';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('\uD83D\uDD17  Enter URL', urlBtnX + urlBtnW / 2, bY + bH / 2);
+        this._vrVideoButtons.push({
+            action: 'video_enter_url',
+            u0: urlBtnX / CW, v0: bY / CH,
+            u1: (urlBtnX + urlBtnW) / CW, v1: (bY + bH) / CH,
+        });
+
+        // "Back" button
+        const backBtnIdx = this._vrVideoButtons.length;
+        const bhover = this._vrVideoHovered === backBtnIdx;
+        ctx.fillStyle   = bhover ? 'rgba(60,20,20,0.9)' : 'rgba(30,10,10,0.75)';
+        ctx.strokeStyle = bhover ? '#ff7777' : '#884444';
+        ctx.lineWidth   = bhover ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(bakBtnX, bY, bakBtnW, bH, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle    = bhover ? '#ffffff' : '#ffaaaa';
+        ctx.font         = 'bold 30px system-ui, sans-serif';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('\u25C4  Back', bakBtnX + bakBtnW / 2, bY + bH / 2);
+        this._vrVideoButtons.push({
+            action: 'video_back',
+            u0: bakBtnX / CW, v0: bY / CH,
+            u1: (bakBtnX + bakBtnW) / CW, v1: (bY + bH) / CH,
+        });
+    }
+
+    // ── VR URL entry panel ────────────────────────────────────────────────────
+
+    _redrawVideoUrlPanel() {
+        const ctx = this._mCtx;
+        const CW = this._mCanvas.width, CH = this._mCanvas.height;
+        ctx.clearRect(0, 0, CW, CH);
+
+        // Background
+        ctx.fillStyle = 'rgba(4, 14, 10, 0.97)';
+        ctx.beginPath();
+        ctx.roundRect(4, 4, CW - 8, CH - 8, 18);
+        ctx.fill();
+        ctx.strokeStyle = '#009966';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Title
+        ctx.fillStyle = '#80ffd8';
+        ctx.font = 'bold 44px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('\uD83D\uDD17  Enter Video URL', CW / 2, 22);
+
+        // URL text field
+        const txX = 40, txY = 88, txW = CW - 80, txH = 120;
+        ctx.fillStyle   = '#020e08';
+        ctx.strokeStyle = '#009966';
+        ctx.lineWidth   = 2;
+        ctx.beginPath();
+        ctx.roundRect(txX, txY, txW, txH, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        const url = this._vrUrlText || '';
+        if (url) {
+            ctx.fillStyle    = '#ccffe8';
+            ctx.font         = '28px monospace';
+            ctx.textAlign    = 'left';
+            ctx.textBaseline = 'middle';
+            const pad = 14;
+            let shown = url;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(txX + pad, txY, txW - 2 * pad, txH);
+            ctx.clip();
+            // Scroll left to keep the end visible
+            while (shown.length > 1 && ctx.measureText(shown + '\u258B').width > txW - 2 * pad)
+                shown = shown.slice(1);
+            ctx.fillText(shown + '\u258B', txX + pad, txY + txH / 2);
+            ctx.restore();
+        } else {
+            ctx.fillStyle    = '#336655';
+            ctx.font         = 'italic 26px system-ui, sans-serif';
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('https://\u2026  (use Quest VR keyboard)', CW / 2, txY + txH / 2);
+        }
+
+        // Hint
+        ctx.fillStyle    = '#559977';
+        ctx.font         = '22px system-ui, sans-serif';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Direct video file URL (e.g. .mp4) required — no YouTube links', CW / 2, txY + txH + 10);
+
+        // Play / Cancel buttons
+        this._vrUrlButtons = [];
+        const bY = CH - 90, bH = 72;
+        const totalBW = CW - 60, gap = 16;
+        const playBtnW = Math.round((totalBW - gap) * 0.58);
+        const canBtnW  = totalBW - gap - playBtnW;
+        const playBtnX = 30;
+        const canBtnX  = playBtnX + playBtnW + gap;
+
+        // Play button
+        const playHover = this._vrUrlHovered === 0;
+        ctx.fillStyle   = url ? (playHover ? 'rgba(0,100,40,0.95)' : 'rgba(0,65,28,0.85)') : 'rgba(20,40,30,0.5)';
+        ctx.strokeStyle = url ? (playHover ? '#33ff88' : '#00cc55') : '#224433';
+        ctx.lineWidth   = playHover ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(playBtnX, bY, playBtnW, bH, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle    = url ? (playHover ? '#ffffff' : '#88ffbb') : '#446655';
+        ctx.font         = 'bold 30px system-ui, sans-serif';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('\u25B6  Play', playBtnX + playBtnW / 2, bY + bH / 2);
+        this._vrUrlButtons.push({
+            action: 'video_url_play',
+            u0: playBtnX / CW, v0: bY / CH,
+            u1: (playBtnX + playBtnW) / CW, v1: (bY + bH) / CH,
+        });
+
+        // Cancel button
+        const canHover = this._vrUrlHovered === 1;
+        ctx.fillStyle   = canHover ? 'rgba(60,20,20,0.9)' : 'rgba(30,10,10,0.75)';
+        ctx.strokeStyle = canHover ? '#ff7777' : '#884444';
+        ctx.lineWidth   = canHover ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(canBtnX, bY, canBtnW, bH, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle    = canHover ? '#ffffff' : '#ffaaaa';
+        ctx.font         = 'bold 30px system-ui, sans-serif';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('\u25C4  Cancel', canBtnX + canBtnW / 2, bY + bH / 2);
+        this._vrUrlButtons.push({
+            action: 'video_url_cancel',
+            u0: canBtnX / CW, v0: bY / CH,
+            u1: (canBtnX + canBtnW) / CW, v1: (bY + bH) / CH,
+        });
+    }
+
+    _openVRUrlInput() {
+        if (!this._vrUrlInp) {
+            const inp = document.createElement('input');
+            inp.type = 'url';
+            inp.setAttribute('enterkeyhint', 'go');
+            inp.setAttribute('autocomplete', 'off');
+            inp.setAttribute('autocorrect',  'off');
+            inp.setAttribute('autocapitalize', 'off');
+            inp.setAttribute('spellcheck', 'false');
+            inp.style.cssText =
+                'position:fixed;left:50%;bottom:2px;transform:translateX(-50%);' +
+                'width:2px;height:2px;opacity:0.01;z-index:9999;' +
+                'border:none;background:transparent;color:transparent;outline:none;';
+            document.body.appendChild(inp);
+            inp.addEventListener('input', () => {
+                this._vrUrlText = inp.value;
+                this._redrawMenuPanel();
+                const gl = this._getGL();
+                if (gl && this._menuTex) this._uploadCanvas(gl, this._menuTex, this._mCanvas);
+            });
+            inp.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter')  { e.preventDefault(); this._execYMenuAction('video_url_play'); }
+                if (e.key === 'Escape') { e.preventDefault(); this._execYMenuAction('video_url_cancel'); }
+            });
+            this._vrUrlInp = inp;
+        }
+        this._vrUrlInp.value = '';
+        this._vrUrlInp.focus();
+    }
+
+    _closeVRUrlInput() {
+        this._vrVideoUrlMode = false;
+        this._vrUrlText      = '';
+        this._vrUrlHovered   = -1;
+        this._vrUrlButtons   = [];
+        if (this._vrUrlInp) { this._vrUrlInp.value = ''; this._vrUrlInp.blur(); }
+    }
+
+    async _fetchVRVideoList() {
+        const videos = [];
+        try {
+            const u = typeof etherdeckAuth !== 'undefined' ? etherdeckAuth.getUsername?.() : '';
+            const params = u ? `?action=friend_videos&username=${encodeURIComponent(u)}` : '?action=friend_videos';
+            const r = await fetch(BLOXEL_API_BASE + '/videos.php' + params);
+            if (r.ok) {
+                const d = await r.json();
+                for (const v of (d.videos || [])) videos.push({ ...v, src: 'friend' });
+            }
+        } catch (_e) {}
+        try {
+            const r = await fetch(BLOXEL_API_BASE + '/videos.php?action=global');
+            if (r.ok) {
+                const d = await r.json();
+                for (const v of (d.videos || [])) videos.push({ ...v, src: 'global' });
+            }
+        } catch (_e) {}
+        this._vrVideoList = videos;
+        if (this._vrVideoMode) this._redrawMenuPanel();
+        // Canvas is uploaded every frame in _renderYMenuFrame step 2, so no gl needed here
     }
 
     // ── VR chat panel canvas drawing ──────────────────────────────────────────
@@ -2932,6 +3566,387 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
     }
 }
 // ===== end WebXR VR Manager =====
+
+// ===== Y-Menu Theater =====
+// Cinema-style video theater launched from the Y key (desktop), floating 📺 button (mobile),
+// or the "📺 Theater" button inside the VR Y-menu (Quest / Pico).
+// Videos are sourced from: (1) friend-shared via videos.php, (2) admin-approved global queue.
+// A <video> element is exposed as _videoEl so the WebXR renderer can sample it as a GL texture.
+
+// PHP backend lives on the main server — requests go there regardless of which
+// host this JS was served from (needed when running the dev Python server locally).
+const BLOXEL_API_BASE = 'https://bloxel.ngrok.io';
+class YMenuTheater {
+    constructor() {
+        this._videoEl        = null;
+        this._overlay        = null;
+        this._room           = null;
+        this._sidebar        = null;
+        this._nowPlaying     = null;
+        this._shareBtn       = null;
+        this._placeholder    = null;
+        this._sidebarVisible = false;
+        this._dragging       = false;
+        this._lastX = 0; this._lastY = 0;
+        this._yaw = 0;   this._pitch = 0;
+        this._adminPollTimer     = null;
+        this._lastPendingCount   = 0;
+        this._build();
+        this._attachKeys();
+    }
+
+    _build() {
+        const ov = document.createElement('div');
+        ov.id = 'yt_overlay';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:950;background:#000;display:none;overflow:hidden;user-select:none;cursor:default;touch-action:none;';
+        ov.innerHTML = `
+        <div id="yt_scene" style="position:absolute;inset:0;perspective:700px;overflow:hidden;">
+            <div id="yt_room" style="position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(0deg) rotateY(0deg);will-change:transform;">
+                <div style="position:absolute;left:50%;bottom:0;width:600%;height:300%;transform:translateX(-50%) rotateX(80deg);transform-origin:bottom center;background:radial-gradient(ellipse at 50% 0%,#1a1007,#060606);pointer-events:none;"></div>
+                <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translateZ(-320px);width:72vw;aspect-ratio:16/9;background:#000;border:5px solid #1a2535;box-shadow:0 0 80px rgba(0,80,180,0.18);border-radius:4px;overflow:hidden;">
+                    <video id="yt_video" autoplay loop playsinline style="width:100%;height:100%;display:block;object-fit:fill;"></video>
+                    <div id="yt_placeholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:linear-gradient(135deg,#0d1b2a,#1a2a40);color:#3a6a9a;font:bold clamp(14px,3vw,28px)/1.4 system-ui,sans-serif;text-align:center;">
+                        <span style="font-size:3em;">📺</span><span>Select a video from the list</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="yt_bar" style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:linear-gradient(transparent,rgba(0,0,0,0.9));display:flex;gap:8px;align-items:center;flex-wrap:wrap;opacity:0;transition:opacity 0.25s;pointer-events:none;">
+            <button id="yt_list_btn"   style="padding:7px 14px;border-radius:8px;background:rgba(18,50,120,0.88);color:#b8d8ff;border:1px solid rgba(90,160,255,0.3);font:bold 13px system-ui,sans-serif;cursor:pointer;pointer-events:all;">📋 Videos</button>
+            <button id="yt_pause_btn"  style="padding:7px 12px;border-radius:8px;background:rgba(18,50,120,0.88);color:#b8d8ff;border:1px solid rgba(90,160,255,0.3);font:bold 16px system-ui,sans-serif;cursor:pointer;pointer-events:all;display:none;">⏸</button>
+            <input  id="yt_vol_slider" type="range" min="0" max="1" step="0.05" value="1" style="width:80px;accent-color:#66b8ff;cursor:pointer;pointer-events:all;vertical-align:middle;display:none;">
+            <div    id="yt_now_playing" style="flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#8ab8d8;font:13px system-ui,sans-serif;min-width:0;">Nothing playing</div>
+            <button id="yt_share_btn"  style="padding:7px 14px;border-radius:8px;background:rgba(0,70,35,0.88);color:#6ee7b7;border:1px solid rgba(0,176,111,0.35);font:bold 13px system-ui,sans-serif;cursor:pointer;display:none;pointer-events:all;">📤 Share</button>
+            <button id="yt_submit_btn" style="padding:7px 14px;border-radius:8px;background:rgba(70,40,0,0.88);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);font:bold 13px system-ui,sans-serif;cursor:pointer;pointer-events:all;">+ Submit</button>
+            <button id="yt_close_btn"  style="padding:7px 14px;border-radius:8px;background:rgba(50,8,8,0.88);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);font:bold 13px system-ui,sans-serif;cursor:pointer;pointer-events:all;">✕ Close [Y]</button>
+        </div>
+        <div id="yt_sidebar" style="position:absolute;right:-340px;top:0;bottom:0;width:330px;background:rgba(6,10,24,0.97);border-left:1px solid rgba(90,160,255,0.12);overflow-y:auto;overscroll-behavior:contain;transition:right 0.25s cubic-bezier(.32,.72,0,1);padding-bottom:80px;z-index:10;touch-action:pan-y;">
+            <div style="padding:12px 16px 10px;border-bottom:1px solid rgba(90,160,255,0.1);display:flex;align-items:center;justify-content:space-between;">
+                <span style="font:bold 14px system-ui,sans-serif;color:#88ccff;">Video Theater</span>
+                <button id="yt_sidebar_close" style="background:none;border:none;color:#7aacce;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">✕</button>
+            </div>
+            <div style="padding:0 10px 8px;">
+                <div style="font:bold 10px system-ui,sans-serif;color:rgba(122,172,206,0.7);text-transform:uppercase;letter-spacing:0.1em;padding:8px 6px 4px;">👥 Friend Shared</div>
+                <div id="yt_friend_list"></div>
+            </div>
+            <div style="padding:0 10px 8px;">
+                <div style="font:bold 10px system-ui,sans-serif;color:rgba(122,172,206,0.7);text-transform:uppercase;letter-spacing:0.1em;padding:8px 6px 4px;">🌐 Global (Admin Approved)</div>
+                <div id="yt_global_list"></div>
+            </div>
+        </div>`;
+        document.body.appendChild(ov);
+        this._overlay     = ov;
+        this._room        = ov.querySelector('#yt_room');
+        this._sidebar     = ov.querySelector('#yt_sidebar');
+        this._videoEl     = ov.querySelector('#yt_video');
+        this._placeholder = ov.querySelector('#yt_placeholder');
+        this._nowPlaying  = ov.querySelector('#yt_now_playing');
+        this._shareBtn    = ov.querySelector('#yt_share_btn');
+
+        // Bar auto-show on interaction
+        const bar = ov.querySelector('#yt_bar');
+        let _barTimer;
+        const showBar = () => {
+            bar.style.opacity = '1'; bar.style.pointerEvents = 'all';
+            clearTimeout(_barTimer);
+            _barTimer = setTimeout(() => { bar.style.opacity = '0'; bar.style.pointerEvents = 'none'; }, 3000);
+        };
+        ov.addEventListener('mousemove',   showBar, { passive: true });
+        ov.addEventListener('touchmove',   showBar, { passive: true });
+        ov.addEventListener('pointerdown', showBar, { passive: true });
+
+        ov.querySelector('#yt_close_btn').addEventListener('click', () => this.close());
+        ov.querySelector('#yt_list_btn').addEventListener('click', (e) => { e.stopPropagation(); this._toggleSidebar(); });
+        ov.querySelector('#yt_sidebar_close').addEventListener('click', () => this._closeSidebar());
+        ov.querySelector('#yt_submit_btn').addEventListener('click', () => this._promptSubmit());
+        this._shareBtn.addEventListener('click', () => this._shareCurrentVideo());
+
+        // Prevent the game WASM from re-acquiring pointer lock while theater is open
+        const _origRPL = HTMLElement.prototype.requestPointerLock;
+        HTMLElement.prototype.requestPointerLock = function(...args) {
+            if (window._yMenuTheater?._overlay?.style.display !== 'none') return;
+            return _origRPL.apply(this, args);
+        };
+
+        const pauseBtn  = ov.querySelector('#yt_pause_btn');
+        const volSlider = ov.querySelector('#yt_vol_slider');
+        pauseBtn.addEventListener('click', () => {
+            if (this._videoEl.paused) this._videoEl.play();
+            else this._videoEl.pause();
+        });
+        volSlider.addEventListener('input', () => { this._videoEl.volume = parseFloat(volSlider.value); });
+
+        this._videoEl.addEventListener('play',    () => {
+            this._placeholder.style.display = 'none';
+            this._shareBtn.style.display = '';
+            pauseBtn.textContent = '⏸';
+            pauseBtn.style.display = '';
+            volSlider.style.display = '';
+        });
+        this._videoEl.addEventListener('pause',   () => { pauseBtn.textContent = '▶'; });
+        this._videoEl.addEventListener('emptied', () => {
+            this._placeholder.style.display = '';
+            this._shareBtn.style.display = 'none';
+            pauseBtn.style.display = 'none';
+            volSlider.style.display = 'none';
+        });
+
+        // Look-around — mouse (skip buttons and links)
+        ov.addEventListener('mousedown', (e) => {
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'A')
+                { this._dragging = true; this._lastX = e.clientX; this._lastY = e.clientY; }
+        }, { passive: true });
+        window.addEventListener('mouseup', () => { this._dragging = false; }, { passive: true });
+        ov.addEventListener('mousemove', (e) => {
+            if (!this._dragging) return;
+            this._applyLook(e.clientX - this._lastX, e.clientY - this._lastY);
+            this._lastX = e.clientX; this._lastY = e.clientY;
+        }, { passive: true });
+
+        // Look-around — touch
+        ov.addEventListener('touchstart', (e) => {
+            if (e.target.closest('#yt_sidebar, button, input')) return;
+            const t = e.touches[0];
+            this._dragging = true; this._lastX = t.clientX; this._lastY = t.clientY;
+        }, { passive: true });
+        ov.addEventListener('touchend',   () => { this._dragging = false; }, { passive: true });
+        ov.addEventListener('touchmove', (e) => {
+            if (!this._dragging) return;
+            const t = e.touches[0];
+            this._applyLook(t.clientX - this._lastX, t.clientY - this._lastY);
+            this._lastX = t.clientX; this._lastY = t.clientY;
+        }, { passive: true });
+    }
+
+    _applyLook(dx, dy) {
+        const S = 0.28;
+        this._yaw   = Math.max(-30, Math.min(30,  this._yaw   + dx * S));
+        this._pitch = Math.max(-15, Math.min(15,  this._pitch + dy * S));
+        if (this._room) this._room.style.transform = `rotateX(${-this._pitch}deg) rotateY(${this._yaw}deg)`;
+    }
+
+    _attachKeys() {
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            if (e.code === 'KeyY') {
+                if (this._overlay?.style.display !== 'none') {
+                    this.close(); e.stopPropagation(); return;
+                }
+                // Open only while game has pointer lock (player is in the game world)
+                if (typeof mtCanvas !== 'undefined' && document.pointerLockElement === mtCanvas) {
+                    this.open(); e.stopPropagation();
+                }
+            }
+            if (e.code === 'Escape' && this._overlay?.style.display !== 'none') {
+                this.close();
+            }
+        });
+    }
+
+    open() {
+        if (!this._overlay) return;
+        this._overlay.style.display = 'block';
+        this._yaw = 0; this._pitch = 0;
+        if (this._room) this._room.style.transform = 'rotateX(0deg) rotateY(0deg)';
+        if (document.exitPointerLock) document.exitPointerLock();
+        this._fetchLists();
+    }
+
+    close() {
+        if (!this._overlay) return;
+        this._overlay.style.display = 'none';
+        this._closeSidebar();
+        this._stopAdminPoll();
+        if (typeof mtCanvas !== 'undefined') mtCanvas.focus();
+    }
+
+    toggle() {
+        if (this._overlay?.style.display === 'none') this.open(); else this.close();
+    }
+
+    _toggleSidebar() { this._sidebarVisible ? this._closeSidebar() : this._openSidebar(); }
+    _openSidebar()   { this._sidebarVisible = true;  if (this._sidebar) this._sidebar.style.right = '0'; }
+    _closeSidebar()  { this._sidebarVisible = false; if (this._sidebar) this._sidebar.style.right = '-340px'; }
+
+    _playVideo(url, title) {
+        if (!this._videoEl || !/^https?:\/\//i.test(url)) return;
+        // Load directly — no proxy needed; browsers allow cross-origin video under COEP credentialless
+        this._videoEl.src = url;
+        this._videoEl.muted = false;
+        this._videoEl.play().catch(() => { this._videoEl.muted = true; this._videoEl.play().catch(() => {}); });
+        if (this._nowPlaying) this._nowPlaying.textContent = '▶ ' + (title || url);
+    }
+
+    _renderList(containerId, videos, emptyMsg) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        if (!(videos || []).length) {
+            el.innerHTML = `<div style="font:12px system-ui,sans-serif;color:#7aacce;font-style:italic;padding:4px 6px;">${emptyMsg}</div>`;
+            return;
+        }
+        el.innerHTML = '';
+        for (const v of videos) {
+            const row = document.createElement('div');
+            row.style.cssText = 'padding:8px 10px;margin-bottom:4px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(90,160,255,0.08);cursor:pointer;';
+            row.innerHTML = `<div style="font:bold 13px system-ui,sans-serif;color:#dbe4f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${this._esc(v.title||v.url)}</div>${v.sharedBy?`<div style="font:11px system-ui,sans-serif;color:#7aacce;">shared by ${this._esc(v.sharedBy)}</div>`:''}`;
+            row.addEventListener('click', () => { this._playVideo(v.url, v.title); this._closeSidebar(); });
+            row.addEventListener('mouseenter', () => { row.style.background = 'rgba(90,160,255,0.1)'; });
+            row.addEventListener('mouseleave', () => { row.style.background = 'rgba(255,255,255,0.04)'; });
+            el.appendChild(row);
+        }
+    }
+
+    async _fetchLists() {
+        try {
+            const u = typeof etherdeckAuth !== 'undefined' ? etherdeckAuth.getUsername?.() : '';
+            const params = u ? `?action=friend_videos&username=${encodeURIComponent(u)}` : '?action=friend_videos';
+            const r = await fetch(BLOXEL_API_BASE + '/videos.php' + params);
+            if (r.ok) {
+                const d = await r.json();
+                this._renderList('yt_friend_list', d.videos || [], 'No shared videos yet.');
+                if (d.is_admin) this._ensureAdminPanel();
+            }
+        } catch (_e) { this._renderList('yt_friend_list', [], 'Could not load.'); }
+        try {
+            const r = await fetch(BLOXEL_API_BASE + '/videos.php?action=global');
+            if (r.ok) {
+                const d = await r.json();
+                this._renderList('yt_global_list', d.videos || [], 'No approved videos yet.');
+            }
+        } catch (_e) { this._renderList('yt_global_list', [], 'Could not load.'); }
+    }
+
+    _promptSubmit() {
+        const url = window.prompt('Enter a video URL (https:// or http://)');
+        if (url === null) return;
+        if (!/^https?:\/\//i.test(url)) { alert('URL must start with https:// or http://'); return; }
+        const title = window.prompt('Title (optional)', '') || url;
+        this._submitGlobal(url, title);
+    }
+
+    async _submitGlobal(url, title) {
+        try {
+            const u = typeof etherdeckAuth !== 'undefined' ? etherdeckAuth.getUsername?.() : '';
+            const fd = new FormData();
+            fd.append('action', 'submit_global'); fd.append('url', url); fd.append('title', title || url);
+            if (u) fd.append('username', u);
+            const r = await fetch(BLOXEL_API_BASE + '/videos.php', { method: 'POST', body: fd });
+            const data = await r.json().catch(() => null);
+            if (r.ok && data?.success) {
+                alert('Submitted! An admin must approve it before it appears globally.');
+            } else {
+                alert('Submission failed: ' + (data?.message || ('HTTP ' + r.status)));
+            }
+        } catch (_e) { alert('Network error: ' + _e.message); }
+    }
+
+    async _shareCurrentVideo() {
+        if (!this._videoEl?.src) return;
+        const u = typeof etherdeckAuth !== 'undefined' ? etherdeckAuth.getUsername?.() : '';
+        if (!u) { alert('Sign in to share videos with friends.'); return; }
+        try {
+            const fd = new FormData();
+            fd.append('action', 'share_with_friends');
+            fd.append('url',   this._videoEl.src);
+            fd.append('title', (this._nowPlaying?.textContent || '').replace(/^▶ /, '') || '');
+            fd.append('username', u);
+            const r = await fetch(BLOXEL_API_BASE + '/videos.php', { method: 'POST', body: fd });
+            alert(r.ok ? 'Shared with your online friends!' : 'Could not share.');
+        } catch (_e) { alert('Network error.'); }
+    }
+
+    _ensureAdminPanel() {
+        if (this._sidebar?.querySelector('#yt_admin_sec')) return;
+        const sec = document.createElement('div');
+        sec.id = 'yt_admin_sec';
+        sec.innerHTML = '<div style="padding:0 10px 8px;"><div style="font:bold 10px system-ui,sans-serif;color:rgba(251,191,36,0.8);text-transform:uppercase;letter-spacing:0.1em;padding:8px 6px 4px;">⚙️ Admin — Pending</div><div id="yt_pending_list"></div></div>';
+        this._sidebar?.appendChild(sec);
+        this._fetchPending();
+        this._startAdminPoll();
+    }
+
+    _startAdminPoll() {
+        if (this._adminPollTimer) return;
+        this._adminPollTimer = setInterval(() => {
+            if (this._overlay?.style.display !== 'none') this._fetchPending();
+        }, 20000);  // poll every 20 s while theater is open
+    }
+
+    _stopAdminPoll() {
+        if (this._adminPollTimer) { clearInterval(this._adminPollTimer); this._adminPollTimer = null; }
+    }
+
+    _showAdminToast(msg) {
+        let t = document.getElementById('yt_admin_toast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'yt_admin_toast';
+            t.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:960;padding:10px 22px;border-radius:10px;background:rgba(200,130,0,0.97);color:#fff;font:bold 14px system-ui,sans-serif;box-shadow:0 4px 24px #0008;pointer-events:none;transition:opacity 0.4s;white-space:nowrap;';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.opacity = '1';
+        clearTimeout(t._hide);
+        t._hide = setTimeout(() => { t.style.opacity = '0'; }, 4000);
+    }
+
+    async _fetchPending() {
+        try {
+            const u = typeof etherdeckAuth !== 'undefined' ? etherdeckAuth.getUsername?.() : '';
+            const r = await fetch(BLOXEL_API_BASE + `/videos.php?action=pending&username=${encodeURIComponent(u || '')}`);
+            if (!r.ok) return;
+            const d = await r.json();
+            const el = document.getElementById('yt_pending_list');
+            if (!el) return;
+            const vids = d.videos || [];
+
+            // Notify if new submissions arrived since last check
+            if (this._lastPendingCount > 0 && vids.length > this._lastPendingCount) {
+                const n = vids.length - this._lastPendingCount;
+                this._showAdminToast(`🎬 ${n} new video submission${n > 1 ? 's' : ''} waiting for approval!`);
+                // Open the sidebar so admin sees it immediately
+                this._openSidebar();
+            }
+            this._lastPendingCount = vids.length;
+
+            if (!vids.length) {
+                el.innerHTML = '<div style="font:12px system-ui,sans-serif;color:#7aacce;font-style:italic;padding:4px 6px;">No pending submissions.</div>';
+                return;
+            }
+            el.innerHTML = '';
+            for (const v of vids) {
+                const row = document.createElement('div');
+                row.style.cssText = 'padding:8px 10px;margin-bottom:4px;border-radius:8px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.12);';
+                // Safe URL: only allow http/https before opening in tab
+                const safeUrl = /^https?:\/\//i.test(v.url) ? v.url : '';
+                const urlLink = safeUrl
+                    ? `<a href="${this._esc(safeUrl)}" target="_blank" rel="noopener noreferrer" style="color:#fbbf24;font:10px system-ui,sans-serif;word-break:break-all;display:block;margin:-2px 0 5px;opacity:0.75;cursor:pointer;" onclick="event.stopPropagation();">🔗 ${this._esc(safeUrl.length > 55 ? safeUrl.slice(0, 52) + '…' : safeUrl)}</a>`
+                    : '';
+                row.innerHTML = `<div style="font:bold 12px system-ui,sans-serif;color:#fde68a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${this._esc(v.title||v.url)}</div>${urlLink}<div style="font:11px system-ui,sans-serif;color:#fbbf24;margin-bottom:6px;">by ${this._esc(v.submitted_by||'?')}</div><div style="display:flex;gap:6px;"><button data-id="${v.id}" class="yta" style="flex:1;padding:4px 0;border-radius:6px;background:rgba(0,70,35,0.8);color:#6ee7b7;border:1px solid rgba(0,176,111,0.3);font:bold 11px system-ui,sans-serif;cursor:pointer;">✓ Approve</button><button data-id="${v.id}" class="ytr" style="flex:1;padding:4px 0;border-radius:6px;background:rgba(70,8,8,0.8);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);font:bold 11px system-ui,sans-serif;cursor:pointer;">✕ Reject</button></div>`;
+                row.querySelectorAll('.yta').forEach(b => b.addEventListener('click', () => this._adminAct('approve_video', b.dataset.id)));
+                row.querySelectorAll('.ytr').forEach(b => b.addEventListener('click', () => this._adminAct('reject_video', b.dataset.id)));
+                el.appendChild(row);
+            }
+        } catch (_e) {}
+    }
+
+    async _adminAct(action, id) {
+        try {
+            const u = typeof etherdeckAuth !== 'undefined' ? etherdeckAuth.getUsername?.() : '';
+            const fd = new FormData(); fd.append('action', action); fd.append('id', id); if (u) fd.append('username', u);
+            await fetch(BLOXEL_API_BASE + '/videos.php', { method: 'POST', body: fd });
+            this._fetchPending(); this._fetchLists();
+        } catch (_e) {}
+    }
+
+    _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+}
+// ===== end Y-Menu Theater =====
+
+function _initYMenuTheater() {
+    if (!window._yMenuTheater) window._yMenuTheater = new YMenuTheater();
+}
 
 /* STALE_OLD_YMENU_BEGIN — removed, replaced by clean implementation above
 // STALE_REMOVED _initGLResources() {

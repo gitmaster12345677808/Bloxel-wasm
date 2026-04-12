@@ -1629,6 +1629,7 @@
       function applyDeviceDefaults(mtl) {
           enableTouchDefaults(mtl);
           enableDesktopDefaults(mtl);
+          mtl.setConf('enable_client_modding', 'true');
       }
 
       const tcon = document.getElementById('temporary_console');
@@ -1942,6 +1943,7 @@
               args.port = 30000;
               args.go = true;
               history.pushState({}, "", `?proxy=${proxyIndex}&game=${game}&join=${clientCode}`);
+              window._p2pVoiceRoom = 'p2p-' + clientCode;
               mtl.setVPN(serverCode, clientCode);
               enableMemorySaving(mtl);
               applyUserSettings(mtl);
@@ -1972,6 +1974,7 @@
               args.port = 30000;
               args.go = true;
               mtl.setVPN(null, join_code);
+              window._p2pVoiceRoom = 'p2p-' + join_code;
               enableMemorySaving(mtl);
               applyUserSettings(mtl);
               applyDeviceDefaults(mtl);
@@ -2005,6 +2008,7 @@
               args.port = 30000;
               args.go = true;
               mtl.setVPN(null, parsed.code);
+              window._p2pVoiceRoom = 'p2p-' + parsed.code;
               enableMemorySaving(mtl);
               applyUserSettings(mtl);
               applyDeviceDefaults(mtl);
@@ -2079,7 +2083,7 @@
       // ===== EtherDeck Auth =====
       class EtherDeckAuth {
           constructor() {
-              this.apiUrl = 'https://tjc.ngrok-free.app/auth.php';
+              this.apiUrl = 'https://bloxel.ngrok.io/auth.php';
               this.currentUser = null;
               this.loadSession();
           }
@@ -2350,7 +2354,7 @@
       // ===== end EtherDeck Auth =====
 
       // ===== Friends System =====
-      const FRIENDS_API = 'https://tjc.ngrok-free.app/friends.php';
+      const FRIENDS_API = 'https://bloxel.ngrok.io/friends.php';
       let _friendsList   = [];
       let _friendsUnread = {};
       let _friendsChat   = { open: false, username: null, lastId: 0, pollTimer: null };
