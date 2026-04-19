@@ -423,6 +423,178 @@ canvas.emscripten {
     resize: none;
     width: 100%;
 }
+
+/* ── File Manager overlay ────────────────────────────── */
+#filemgr_overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 500;
+    background: rgba(4, 10, 24, 0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    flex-direction: column;
+    font-family: 'Lucida Console', Monaco, monospace;
+}
+#filemgr_overlay.open { display: flex; }
+#filemgr_topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(8, 20, 48, 0.98);
+    border-bottom: 1px solid rgba(90,160,255,0.18);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+#filemgr_title {
+    font-size: 13px;
+    font-weight: 900;
+    color: #7aacce;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+    font-family: inherit;
+}
+#filemgr_tabs {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.fmgr-tab {
+    min-height: 26px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(90,160,255,0.22);
+    background: rgba(8,24,56,0.85);
+    color: #7aacce;
+    font-size: 11px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.fmgr-tab:hover { background: rgba(28,60,120,0.85); }
+.fmgr-tab.active { background: rgba(20,60,140,0.95); border-color: rgba(90,160,255,0.55); color: #a0c8ff; }
+#filemgr_breadcrumb {
+    flex: 1 1 auto;
+    font-size: 12px;
+    color: #94afd6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+#filemgr_breadcrumb span {
+    cursor: pointer;
+    color: #5aaeff;
+}
+#filemgr_breadcrumb span:hover { text-decoration: underline; }
+#filemgr_breadcrumb .sep { color: rgba(255,255,255,0.25); cursor: default; }
+#filemgr_close_btn {
+    background: none;
+    border: 1px solid rgba(90,160,255,0.2);
+    border-radius: 8px;
+    color: #7aacce;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 2px 10px;
+    font-family: inherit;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+#filemgr_close_btn:hover { background: rgba(255,255,255,0.08); }
+#filemgr_toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(6,16,38,0.95);
+    border-bottom: 1px solid rgba(90,160,255,0.1);
+    flex-shrink: 0;
+}
+#filemgr_refresh_btn, #filemgr_up_btn {
+    min-height: 28px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(90,160,255,0.22);
+    background: rgba(8,24,56,0.85);
+    color: #c0d8ff;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+#filemgr_refresh_btn:hover, #filemgr_up_btn:hover { background: rgba(28,60,120,0.85); }
+#filemgr_path_label {
+    font-size: 11px;
+    color: rgba(122,172,206,0.6);
+    margin-left: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+    font-family: inherit;
+}
+#filemgr_list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 6px 0;
+    -webkit-overflow-scrolling: touch;
+}
+.fmgr-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    border-bottom: 1px solid rgba(90,160,255,0.05);
+    cursor: pointer;
+    user-select: none;
+}
+.fmgr-row:hover { background: rgba(90,160,255,0.07); }
+.fmgr-row.dir { color: #5aaeff; }
+.fmgr-row.file { color: #c0d8ff; }
+.fmgr-icon { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; }
+.fmgr-name { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: inherit; }
+.fmgr-size { font-size: 11px; color: rgba(122,172,206,0.55); flex-shrink: 0; text-align: right; min-width: 52px; }
+.fmgr-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.fmgr-btn {
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(90,160,255,0.18);
+    background: rgba(8,24,56,0.8);
+    color: #7aacce;
+    font-size: 11px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+}
+.fmgr-btn:hover { background: rgba(28,60,120,0.8); }
+.fmgr-btn.del { border-color: rgba(255,80,80,0.25); color: #f87171; }
+.fmgr-btn.del:hover { background: rgba(100,20,20,0.7); }
+#filemgr_empty {
+    padding: 24px;
+    text-align: center;
+    color: rgba(122,172,206,0.45);
+    font-size: 12px;
+    font-family: inherit;
+    font-style: italic;
+}
+#filemgr_statusbar {
+    padding: 6px 14px;
+    font-size: 11px;
+    color: rgba(122,172,206,0.5);
+    border-top: 1px solid rgba(90,160,255,0.1);
+    background: rgba(4,10,24,0.9);
+    flex-shrink: 0;
+    font-family: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 `;
 
 const rtHTML = `
@@ -489,6 +661,7 @@ const rtHTML = `
       <div class="sm-section">
         <p class="sm-section-title">Tools</p>
         <button class="sm-btn" id="console_button" onclick="consoleToggle()">Show Console</button>
+        <button class="sm-btn" onclick="openFileMgr()">&#x1F4C1; File Manager</button>
         <button id="vr_toggle_btn" class="sm-btn blue" onclick="window.vrManager && window.vrManager.toggleVR()">VR Mode</button>
       </div>
 
@@ -514,6 +687,26 @@ const rtHTML = `
     </div>
 
     <textarea id="console_output" class="console" rows="8" style="display: none;"></textarea>
+
+    <!-- File Manager overlay -->
+    <div id="filemgr_overlay">
+      <div id="filemgr_topbar">
+        <span id="filemgr_title">&#x1F4C1; File Manager</span>
+        <div id="filemgr_tabs">
+          <button class="fmgr-tab active" id="fmgr_tab_opfs" onclick="fileMgrSetMode('opfs')">OPFS</button>
+          <button class="fmgr-tab" id="fmgr_tab_mem" onclick="fileMgrSetMode('mem')">Memory FS</button>
+        </div>
+        <div id="filemgr_breadcrumb"></div>
+        <button id="filemgr_close_btn" onclick="closeFileMgr()">&#x2715;</button>
+      </div>
+      <div id="filemgr_toolbar">
+        <button id="filemgr_up_btn" onclick="fileMgrUp()">&#x2191; Up</button>
+        <button id="filemgr_refresh_btn" onclick="fileMgrRefresh()">&#x21BB; Refresh</button>
+        <span id="filemgr_path_label"></span>
+      </div>
+      <div id="filemgr_list"></div>
+      <div id="filemgr_statusbar">Ready</div>
+    </div>
 
   </div>
 `;
@@ -719,9 +912,10 @@ function _getVoiceRoom() {
 }
 
 function _autoJoinVoice() {
-    // Silently connect to voice in the background without showing any UI
     const room = _getVoiceRoom();
     const name = _voicePlayerName || 'Player';
+    // Create a hidden background iframe so mic is live immediately without needing to open the panel
+    if (document.getElementById('voice_bg_iframe')) return; // already joined
     const params = 'config.prejoinPageEnabled=false' +
         '&config.prejoinConfig.enabled=false' +
         '&config.startWithVideoMuted=true' +
@@ -734,9 +928,10 @@ function _autoJoinVoice() {
     const iframe = document.createElement('iframe');
     iframe.id = 'voice_bg_iframe';
     iframe.allow = 'microphone; camera; display-capture; fullscreen; speaker-selection';
-    iframe.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;border:none;';
+    iframe.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;';
     iframe.src = _VC_ORIGIN + '/' + room + '#' + params;
     document.body.appendChild(iframe);
+    console.log('[voice] auto-joined room:', room);
 }
 
 function openVoiceWindow() {
@@ -1154,7 +1349,14 @@ function emloop_ready() {
     webxr_queue_chat_message  = cwrap("webxr_queue_chat_message",  null, ["string"]);
     webxr_set_look            = cwrap("webxr_set_look",            null, ["number", "number"]);
     webxr_clear_look          = cwrap("webxr_clear_look",          null, []);
-    mtScheduler.setCondition("wasmReady");
+    // Restore any previously saved worlds from OPFS into WasmFS BEFORE
+    // signalling wasmReady, so main() sees the files when it runs.
+    restoreWorldsFromOPFS().then(() => {
+        mtScheduler.setCondition("wasmReady");
+    }).catch(e => {
+        console.warn('[restore] emloop_ready error:', e);
+        mtScheduler.setCondition("wasmReady");
+    });
 }
 
 // Called when the wasm module wants to force redraw before next frame
@@ -1179,21 +1381,47 @@ var consoleLengthMax = 1000;
 var consoleTextLast = 0;
 var consoleDirty = false;
 
-const PERSIST_MOUNT = '/persist';
-const PERSIST_MT_DIR = PERSIST_MOUNT + '/.minetest';
-const PERSIST_WORLDS_DIR = PERSIST_MT_DIR + '/worlds';
+const PERSIST_MOUNT = '/minetest';
+const PERSIST_MT_DIR = PERSIST_MOUNT;  // path_user IS /minetest (no .minetest subdir)
+const PERSIST_WORLDS_DIR = PERSIST_MOUNT + '/worlds';
+
+// Request persistent storage so the browser won't evict OPFS world saves
+// under storage pressure (e.g. low disk space).  Without this, Chrome/Firefox
+// may silently delete worlds when storage is reclaimed.
+if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().then(granted => {
+        if (!granted) {
+            console.warn('[persist] Persistent storage not granted — worlds may be cleared under browser storage pressure.');
+        } else {
+            console.log('[persist] Persistent storage granted — worlds are protected from eviction.');
+        }
+    });
+}
 
 // Lists worlds stored in OPFS (the WasmFS backend mounted at /persist).
-// OPFS root "/" corresponds to WASM path "/persist/", so world dirs are at
-// OPFS ".minetest/worlds/<name>".
+// OPFS root "/" corresponds to WASM path "/minetest/", so world dirs are at
+// OPFS "worlds/<name>" (path_user = /minetest, worlds at /minetest/worlds/).
 async function listPersistedWorlds() {
     try {
-        if (!navigator.storage || !navigator.storage.getDirectory) return [];
+        if (!navigator.storage || !navigator.storage.getDirectory) {
+            console.warn('[persist] navigator.storage.getDirectory not available — OPFS not supported in this browser/context');
+            return [];
+        }
+        // WasmFS OPFS backend requires crossOriginIsolated (COOP + COEP headers).
+        // If false, the C++ OPFS mount silently falls back to in-memory storage.
+        if (!window.crossOriginIsolated) {
+            console.error('[persist] crossOriginIsolated is FALSE — server is missing COOP/COEP headers. ' +
+                'WasmFS cannot use OPFS sync handles; worlds will NOT be saved across reloads. ' +
+                'Server must send: Cross-Origin-Opener-Policy: same-origin AND Cross-Origin-Embedder-Policy: require-corp (or credentialless)');
+            return [];
+        }
         const root = await navigator.storage.getDirectory();
-        const mtDir = await root.getDirectoryHandle('.minetest', { create: false }).catch(() => null);
-        if (!mtDir) return [];
-        const worldsDir = await mtDir.getDirectoryHandle('worlds', { create: false }).catch(() => null);
-        if (!worldsDir) return [];
+        // path_user = /minetest, so OPFS root maps to /minetest, worlds at OPFS worlds/
+        const worldsDir = await root.getDirectoryHandle('worlds', { create: false }).catch(() => null);
+        if (!worldsDir) {
+            console.log('[persist] No worlds/ directory in OPFS — no worlds saved yet');
+            return [];
+        }
         const worlds = [];
         for await (const [name, handle] of worldsDir.entries()) {
             if (handle.kind !== 'directory') continue;
@@ -1212,13 +1440,17 @@ async function listPersistedWorlds() {
                         if (k === 'world_name' && v) title = v;
                         if (k === 'gameid' && v) gameid = v;
                     });
+                } else {
+                    console.log('[persist] world dir', name, 'has no world.mt yet');
                 }
             } catch (_e) {}
             worlds.push({ id: name, title, gameid, path: PERSIST_WORLDS_DIR + '/' + name });
         }
         worlds.sort((a, b) => a.title.localeCompare(b.title));
+        console.log('[persist] listPersistedWorlds found:', worlds.map(w => w.id + ' (' + w.gameid + ')'));
         return worlds;
     } catch (_e) {
+        console.error('[persist] listPersistedWorlds error:', _e);
         return [];
     }
 }
@@ -1237,6 +1469,11 @@ window.listPersistedWorlds = listPersistedWorlds;
 window.flushPersistedWorlds = () => Promise.resolve();
 window.debugPersist = async function() {
     console.log('[persist] OPFS-backed WasmFS build');
+    console.log('[persist] crossOriginIsolated:', window.crossOriginIsolated);
+    if (navigator.storage && navigator.storage.persisted) {
+        const p = await navigator.storage.persisted();
+        console.log('[persist] storage.persisted():', p, p ? '(protected from eviction)' : '(best-effort, may be cleared)');
+    }
     try {
         const root = await navigator.storage.getDirectory();
         const entries = [];
@@ -1266,9 +1503,452 @@ function consoleToggle() {
     fixGeometry();
 }
 
+// ── File Manager ─────────────────────────────────────────
+let _fmgrStack = []; // stack of { name, handle } for OPFS navigation
+let _fmgrMode = 'opfs';  // 'opfs' | 'mem'
+let _fmgrMemPath = '/'; // current path for Memory FS mode
+
+async function openFileMgr() {
+    closeSideMenu();
+    const overlay = document.getElementById('filemgr_overlay');
+    overlay.classList.add('open');
+    await fileMgrSetMode(_fmgrMode);
+}
+
+function closeFileMgr() {
+    document.getElementById('filemgr_overlay').classList.remove('open');
+}
+
+async function fileMgrSetMode(mode) {
+    _fmgrMode = mode;
+    document.getElementById('fmgr_tab_opfs').classList.toggle('active', mode === 'opfs');
+    document.getElementById('fmgr_tab_mem').classList.toggle('active', mode === 'mem');
+    if (mode === 'opfs') {
+        if (_fmgrStack.length === 0) {
+            try {
+                const root = await navigator.storage.getDirectory();
+                _fmgrStack = [{ name: 'OPFS', handle: root }];
+            } catch (e) {
+                _fileMgrStatus('OPFS error: ' + e.message);
+                return;
+            }
+        }
+    } else {
+        if (_fmgrMemPath === '/') _fmgrMemPath = '/';
+    }
+    await _fileMgrRender();
+}
+
+async function fileMgrUp() {
+    if (_fmgrMode === 'mem') {
+        if (_fmgrMemPath !== '/') {
+            _fmgrMemPath = _fmgrMemPath.replace(/\/[^\/]+$/, '') || '/';
+            await _fileMgrRender();
+        }
+    } else if (_fmgrStack.length > 1) {
+        _fmgrStack.pop();
+        await _fileMgrRender();
+    }
+}
+
+async function fileMgrRefresh() {
+    await _fileMgrRender();
+}
+
+async function _fileMgrNav(name, handle) {
+    _fmgrStack.push({ name, handle });
+    await _fileMgrRender();
+}
+
+function _fmgrFormatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(2) + ' MB';
+}
+
+async function _fileMgrRender() {
+    if (_fmgrMode === 'mem') {
+        _fileMgrRenderMem();
+    } else {
+        await _fileMgrRenderOPFS();
+    }
+}
+
+function _fileMgrRenderMem() {
+    const list = document.getElementById('filemgr_list');
+    const statusbar = document.getElementById('filemgr_statusbar');
+    const pathLabel = document.getElementById('filemgr_path_label');
+    list.innerHTML = '';
+
+    // Module.FS is only available if FS is in EXPORTED_RUNTIME_METHODS.
+    // Try Module.FS first, then the global FS variable (older Emscripten fallback).
+    const FS = (typeof Module !== 'undefined' && Module.FS) || (typeof window.FS !== 'undefined' && window.FS);
+    if (!FS) {
+        list.innerHTML = '<div id="filemgr_empty">Module.FS not exported — rebuild required.<br><br>Add <code>FS</code> to EXPORTED_RUNTIME_METHODS in build_minetest.sh, then run ./build_minetest.sh &amp;&amp; ./build_www.sh</div>';
+        statusbar.textContent = 'Not available — rebuild needed';
+        return;
+    }
+
+    // Breadcrumb for memory path
+    const bc = document.getElementById('filemgr_breadcrumb');
+    bc.innerHTML = '';
+    const parts = _fmgrMemPath === '/' ? [''] : _fmgrMemPath.split('/');
+    parts.forEach((part, i) => {
+        const segPath = parts.slice(0, i + 1).join('/') || '/';
+        if (i > 0) { const sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = ' / '; bc.appendChild(sep); }
+        const s = document.createElement('span');
+        s.textContent = part || '/';
+        if (i < parts.length - 1) {
+            s.onclick = () => { _fmgrMemPath = segPath; _fileMgrRenderMem(); };
+        } else {
+            s.style.color = '#f4f7fb'; s.style.cursor = 'default';
+        }
+        bc.appendChild(s);
+    });
+    pathLabel.textContent = _fmgrMemPath;
+
+    let names;
+    try {
+        names = FS.readdir(_fmgrMemPath).filter(n => n !== '.' && n !== '..');
+    } catch (e) {
+        list.innerHTML = '<div id="filemgr_empty">Error: ' + e.message + '</div>';
+        statusbar.textContent = 'Error';
+        return;
+    }
+
+    if (names.length === 0) {
+        list.innerHTML = '<div id="filemgr_empty">Empty directory</div>';
+        statusbar.textContent = '0 items';
+        return;
+    }
+
+    const entries = names.map(name => {
+        const fullPath = (_fmgrMemPath === '/' ? '' : _fmgrMemPath) + '/' + name;
+        let isDir = false, size = 0;
+        try {
+            const st = FS.stat(fullPath);
+            // WasmFS: use mode bits directly (S_IFDIR = 0o040000)
+            isDir = (st.mode & 0o170000) === 0o040000;
+            size = st.size;
+        } catch (e) {}
+        return { name, fullPath, isDir, size };
+    }).sort((a, b) => {
+        if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+        return a.name.localeCompare(b.name);
+    });
+
+    let fileCount = 0, dirCount = 0;
+    for (const { name, fullPath, isDir, size } of entries) {
+        isDir ? dirCount++ : fileCount++;
+        const row = document.createElement('div');
+        row.className = 'fmgr-row ' + (isDir ? 'dir' : 'file');
+
+        const icon = document.createElement('span');
+        icon.className = 'fmgr-icon';
+        icon.textContent = isDir ? '\uD83D\uDCC1' : '\uD83D\uDCC4';
+        row.appendChild(icon);
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'fmgr-name';
+        nameEl.textContent = name;
+        row.appendChild(nameEl);
+
+        const sizeEl = document.createElement('span');
+        sizeEl.className = 'fmgr-size';
+        if (!isDir) sizeEl.textContent = _fmgrFormatSize(size);
+        row.appendChild(sizeEl);
+
+        const actions = document.createElement('div');
+        actions.className = 'fmgr-actions';
+
+        if (isDir) {
+            row.onclick = (e) => { if (!e.target.closest('.fmgr-btn')) { _fmgrMemPath = fullPath; _fileMgrRenderMem(); } };
+            const openBtn = document.createElement('button');
+            openBtn.className = 'fmgr-btn';
+            openBtn.textContent = 'Open';
+            openBtn.onclick = (e) => { e.stopPropagation(); _fmgrMemPath = fullPath; _fileMgrRenderMem(); };
+            actions.appendChild(openBtn);
+        } else {
+            const dlBtn = document.createElement('button');
+            dlBtn.className = 'fmgr-btn';
+            dlBtn.textContent = '\u2193 DL';
+            dlBtn.title = 'Download';
+            dlBtn.onclick = (e) => {
+                e.stopPropagation();
+                try {
+                    const data = FS.readFile(fullPath);
+                    const blob = new Blob([data]);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = name;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 5000);
+                    _fileMgrStatus('Downloaded ' + name);
+                } catch (err) { _fileMgrStatus('Download failed: ' + err.message); }
+            };
+            actions.appendChild(dlBtn);
+        }
+        row.appendChild(actions);
+        list.appendChild(row);
+    }
+    statusbar.textContent = `Memory FS — ${dirCount} folder${dirCount !== 1 ? 's' : ''}, ${fileCount} file${fileCount !== 1 ? 's' : ''}`;
+}
+
+async function _fileMgrRenderOPFS() {
+    const list = document.getElementById('filemgr_list');
+    const statusbar = document.getElementById('filemgr_statusbar');
+    const pathLabel = document.getElementById('filemgr_path_label');
+    list.innerHTML = '';
+    statusbar.textContent = 'Loading…';
+
+    // Breadcrumb
+    const bc = document.getElementById('filemgr_breadcrumb');
+    bc.innerHTML = '';
+    _fmgrStack.forEach((seg, i) => {
+        if (i > 0) { const sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = ' / '; bc.appendChild(sep); }
+        const s = document.createElement('span');
+        s.textContent = seg.name;
+        if (i < _fmgrStack.length - 1) {
+            s.onclick = async () => { _fmgrStack = _fmgrStack.slice(0, i + 1); await _fileMgrRender(); };
+        } else {
+            s.style.color = '#f4f7fb';
+            s.style.cursor = 'default';
+        }
+        bc.appendChild(s);
+    });
+
+    const currentPath = _fmgrStack.map(s => s.name).join('/');
+    pathLabel.textContent = currentPath;
+
+    const dir = _fmgrStack[_fmgrStack.length - 1].handle;
+    const entries = [];
+    try {
+        for await (const [name, handle] of dir.entries()) {
+            entries.push({ name, handle });
+        }
+    } catch (e) {
+        list.innerHTML = '<div id="filemgr_empty">Error reading directory: ' + e.message + '</div>';
+        statusbar.textContent = 'Error';
+        return;
+    }
+    entries.sort((a, b) => {
+        const aIsDir = a.handle.kind === 'directory';
+        const bIsDir = b.handle.kind === 'directory';
+        if (aIsDir !== bIsDir) return aIsDir ? -1 : 1;
+        return a.name.localeCompare(b.name);
+    });
+
+    if (entries.length === 0) {
+        list.innerHTML = '<div id="filemgr_empty">Empty directory</div>';
+        statusbar.textContent = '0 items';
+        return;
+    }
+
+    let fileCount = 0, dirCount = 0;
+    for (const { name, handle } of entries) {
+        const isDir = handle.kind === 'directory';
+        isDir ? dirCount++ : fileCount++;
+
+        const row = document.createElement('div');
+        row.className = 'fmgr-row ' + (isDir ? 'dir' : 'file');
+
+        const icon = document.createElement('span');
+        icon.className = 'fmgr-icon';
+        icon.textContent = isDir ? '\uD83D\uDCC1' : '\uD83D\uDCC4';
+        row.appendChild(icon);
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'fmgr-name';
+        nameEl.textContent = name;
+        row.appendChild(nameEl);
+
+        const sizeEl = document.createElement('span');
+        sizeEl.className = 'fmgr-size';
+        if (!isDir) {
+            handle.getFile().then(f => { sizeEl.textContent = _fmgrFormatSize(f.size); }).catch(() => {});
+        }
+        row.appendChild(sizeEl);
+
+        const actions = document.createElement('div');
+        actions.className = 'fmgr-actions';
+
+        if (isDir) {
+            row.onclick = (e) => { if (!e.target.closest('.fmgr-btn')) _fileMgrNav(name, handle); };
+            const openBtn = document.createElement('button');
+            openBtn.className = 'fmgr-btn';
+            openBtn.textContent = 'Open';
+            openBtn.onclick = (e) => { e.stopPropagation(); _fileMgrNav(name, handle); };
+            actions.appendChild(openBtn);
+        } else {
+            const dlBtn = document.createElement('button');
+            dlBtn.className = 'fmgr-btn';
+            dlBtn.textContent = '\u2193 DL';
+            dlBtn.title = 'Download';
+            dlBtn.onclick = async (e) => {
+                e.stopPropagation();
+                try {
+                    const file = await handle.getFile();
+                    const url = URL.createObjectURL(file);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = name;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 5000);
+                    _fileMgrStatus('Downloaded ' + name);
+                } catch (err) { _fileMgrStatus('Download failed: ' + err.message); }
+            };
+            actions.appendChild(dlBtn);
+        }
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'fmgr-btn del';
+        delBtn.textContent = '\u2715';
+        delBtn.title = 'Delete';
+        delBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm('Delete "' + name + '"?' + (isDir ? ' This will delete all contents.' : ''))) return;
+            try {
+                await dir.removeEntry(name, { recursive: isDir });
+                _fileMgrStatus('Deleted ' + name);
+                await _fileMgrRender();
+            } catch (err) { _fileMgrStatus('Delete failed: ' + err.message); }
+        };
+        actions.appendChild(delBtn);
+
+        row.appendChild(actions);
+        list.appendChild(row);
+    }
+    statusbar.textContent = `OPFS — ${dirCount} folder${dirCount !== 1 ? 's' : ''}, ${fileCount} file${fileCount !== 1 ? 's' : ''}`;
+}
+
+function _fileMgrStatus(msg) {
+    const sb = document.getElementById('filemgr_statusbar');
+    if (sb) sb.textContent = msg;
+}
+
+// ── World persistence: save MemoryFS → OPFS, restore OPFS → MemoryFS ────────
+
+// Recursively copy an entire WasmFS subtree into OPFS.
+// wasmPath e.g. '/persist/.minetest', opfsDir = corresponding FileSystemDirectoryHandle
+async function _fsSaveDir(wasmPath, opfsDir) {
+    const FS = (typeof Module !== 'undefined' && Module.FS) || window.FS;
+    if (!FS) return;
+    let names;
+    try { names = FS.readdir(wasmPath).filter(n => n !== '.' && n !== '..'); }
+    catch (e) { return; }
+    for (const name of names) {
+        const childWasm = (wasmPath === '/' ? '' : wasmPath) + '/' + name;
+        let isDir = false;
+        try { isDir = (FS.stat(childWasm).mode & 0o170000) === 0o040000; } catch (e) {}
+        if (isDir) {
+            const childDir = await opfsDir.getDirectoryHandle(name, { create: true });
+            await _fsSaveDir(childWasm, childDir);
+        } else {
+            try {
+                const data = FS.readFile(childWasm);
+                const fh = await opfsDir.getFileHandle(name, { create: true });
+                const w = await fh.createWritable();
+                await w.write(data);
+                await w.close();
+            } catch (e) { console.warn('[save] skipped', childWasm, e.message); }
+        }
+    }
+}
+
+async function saveWorldsToOPFS() {
+    const FS = (typeof Module !== 'undefined' && Module.FS) || window.FS;
+    if (!FS) { console.warn('[save] Module.FS not available'); return; }
+    try {
+        const root = await navigator.storage.getDirectory();
+        // Save worlds/ directory
+        const worldsWasm = '/minetest/worlds';
+        let hasWorlds = false;
+        try { FS.readdir(worldsWasm); hasWorlds = true; } catch (e) {}
+        if (hasWorlds) {
+            console.log('[save] copying /minetest/worlds → OPFS/worlds…');
+            const worldsOpfs = await root.getDirectoryHandle('worlds', { create: true });
+            await _fsSaveDir(worldsWasm, worldsOpfs);
+        }
+        // Save minetest.conf
+        const confWasm = '/minetest/minetest.conf';
+        try {
+            const data = FS.readFile(confWasm);
+            const fh = await root.getFileHandle('minetest.conf', { create: true });
+            const w = await fh.createWritable();
+            await w.write(data);
+            await w.close();
+            console.log('[save] saved minetest.conf');
+        } catch (e) { /* no conf file — skip */ }
+        console.log('[save] done.');
+    } catch (e) {
+        console.error('[save] saveWorldsToOPFS failed:', e);
+    }
+}
+
+// Recursively copy OPFS directory into WasmFS.
+async function _fsRestoreDir(opfsDir, wasmPath) {
+    const FS = (typeof Module !== 'undefined' && Module.FS) || window.FS;
+    try { FS.mkdir(wasmPath); } catch (e) { /* already exists */ }
+    for await (const [name, handle] of opfsDir.entries()) {
+        const childWasm = wasmPath + '/' + name;
+        if (handle.kind === 'directory') {
+            await _fsRestoreDir(handle, childWasm);
+        } else {
+            try {
+                const file = await handle.getFile();
+                const buf = new Uint8Array(await file.arrayBuffer());
+                // Ensure parent directory exists
+                const parentPath = childWasm.substring(0, childWasm.lastIndexOf('/'));
+                try { if (parentPath) FS.mkdir(parentPath); } catch (e) {}
+                FS.writeFile(childWasm, buf);
+            } catch (e) { console.warn('[restore] skipped', childWasm, e.message); }
+        }
+    }
+}
+
+async function restoreWorldsFromOPFS() {
+    const FS = (typeof Module !== 'undefined' && Module.FS) || window.FS;
+    if (!FS) { console.warn('[restore] Module.FS not available'); return; }
+    try {
+        const root = await navigator.storage.getDirectory();
+        let restored = false;
+        // Restore worlds/
+        const worldsOpfs = await root.getDirectoryHandle('worlds', { create: false }).catch(() => null);
+        if (worldsOpfs) {
+            console.log('[restore] restoring OPFS/worlds → /minetest/worlds…');
+            try { FS.mkdir('/minetest'); } catch (e) {}
+            try { FS.mkdir('/minetest/worlds'); } catch (e) {}
+            await _fsRestoreDir(worldsOpfs, '/minetest/worlds');
+            restored = true;
+        }
+        // Restore minetest.conf
+        const confHandle = await root.getFileHandle('minetest.conf', { create: false }).catch(() => null);
+        if (confHandle) {
+            try {
+                const file = await confHandle.getFile();
+                const buf = new Uint8Array(await file.arrayBuffer());
+                try { FS.mkdir('/minetest'); } catch (e) {}
+                FS.writeFile('/minetest/minetest.conf', buf);
+                console.log('[restore] restored minetest.conf');
+                restored = true;
+            } catch (e) { console.warn('[restore] minetest.conf failed:', e.message); }
+        }
+        if (!restored) {
+            console.log('[restore] OPFS empty — fresh start');
+        } else {
+            console.log('[restore] done.');
+        }
+    } catch (e) {
+        console.warn('[restore] restoreWorldsFromOPFS failed:', e);
+    }
+}
+
 function handleExitMessage(text) {
     if (text.includes('main() exited with return value 0')) {
-        window.location.href = window.location.pathname;
+        (async () => {
+            console.log('[exit] game exited — saving worlds to OPFS…');
+            await saveWorldsToOPFS();
+            window.location.href = window.location.pathname;
+        })();
     }
 }
 
@@ -1706,9 +2386,12 @@ class MinetestLauncher {
         this.addPacks(this.args.packs);
         // Capture player name for voice chat before DOM is wiped
         if (this.args.name) _voicePlayerName = this.args.name;
-        // Derive per-server voice room: join-code URL takes priority (friend server),
-        // otherwise use the server's IP address (discover server)
-        if (joinCodeUrl) {
+        // Derive per-server voice room.
+        // Priority: friend's name (from invite) > join-code URL > server IP > default
+        if (window._pendingVoiceFriendName) {
+            _voiceRoom = _sanitizeVoiceRoom('bloxel-' + window._pendingVoiceFriendName);
+            delete window._pendingVoiceFriendName;
+        } else if (joinCodeUrl) {
             _voiceRoom = _sanitizeVoiceRoom(joinCodeUrl);
         } else if (this.args.address) {
             _voiceRoom = _sanitizeVoiceRoom(this.args.address);

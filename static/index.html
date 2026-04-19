@@ -1351,6 +1351,17 @@
                                         <option value="minetest_game">minetest_game</option>
                                     </select>
                                 </div>
+                                <div class="field">
+                                    <label for="multiplayer_world">World</label>
+                                    <select id="multiplayer_world">
+                                        <option value="">&#x2b; New world&hellip;</option>
+                                    </select>
+                                </div>
+                                <div class="field" id="new_world_name_field" style="display:none;">
+                                    <label for="new_world_name">World Name</label>
+                                    <input type="text" id="new_world_name" maxlength="32" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="My World">
+                                    <span id="new_world_name_err" style="color:#f87171;font-size:0.82rem;display:none;"></span>
+                                </div>
                                 <button id="launch_server" type="button" class="wii-launch-btn">&#x25B6; Launch Game</button>
                             </div>
                         </div>
@@ -1753,6 +1764,56 @@
 
       const GATED_TABS = ['singleplayer','multiplayer','settings'];
 
+      // ---- World selector (declared here so switchTab and enableLaunchForm can both use it) ----
+      let _allPersistedWorlds = [];
+
+      async function refreshWorldSelector() {
+          _allPersistedWorlds = await (window.listPersistedWorlds ? window.listPersistedWorlds() : Promise.resolve([]));
+          populateWorldSelector();
+      }
+
+      function _updateNewWorldNameField() {
+          const sel = document.getElementById('multiplayer_world');
+          const field = document.getElementById('new_world_name_field');
+          const err = document.getElementById('new_world_name_err');
+          if (!sel || !field) return;
+          const isNew = sel.value === '';
+          field.style.display = isNew ? '' : 'none';
+          if (!isNew && err) { err.style.display = 'none'; err.textContent = ''; }
+      }
+
+      function populateWorldSelector() {
+          const sel = document.getElementById('multiplayer_world');
+          const gameEl = document.getElementById('multiplayer_game');
+          if (!sel || !gameEl) return;
+          const gameFilter = gameEl.value;
+          const prev = sel.value;
+          // remove all options except the first "New world" sentinel
+          while (sel.options.length > 1) sel.remove(1);
+          // match worlds where gameid matches, or gameid is empty/missing (older worlds)
+          const matching = _allPersistedWorlds.filter(w => !gameFilter || !w.gameid || w.gameid === gameFilter);
+          if (matching.length === 0 && _allPersistedWorlds.length > 0) {
+              // worlds exist but none match this game — show all
+              _allPersistedWorlds.forEach(w => {
+                  const opt = document.createElement('option');
+                  opt.value = w.id;
+                  opt.textContent = (w.title !== w.id ? `${w.title} (${w.id})` : w.title) + (w.gameid ? ` [${w.gameid}]` : '');
+                  sel.appendChild(opt);
+              });
+          } else {
+              matching.forEach(w => {
+                  const opt = document.createElement('option');
+                  opt.value = w.id;
+                  opt.textContent = w.title !== w.id ? `${w.title} (${w.id})` : w.title;
+                  sel.appendChild(opt);
+              });
+          }
+          // restore previous selection if still present
+          if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+          _updateNewWorldNameField();
+      }
+      // ---- end world selector declarations ----
+
       function switchTab(name) {
           ['singleplayer','multiplayer','settings','account','friends'].forEach(t => {
               const panel = document.getElementById('tab_' + t);
@@ -1764,6 +1825,9 @@
               if (btn) btn.classList.toggle('active', t === name);
           });
           if (name === 'friends') friendsRefresh();
+          // Refresh world list every time the Play tab is shown so worlds created
+          // during a previous session appear immediately after page reload.
+          if (name === 'singleplayer') refreshWorldSelector();
       }
 
       function enableLaunchForm() {
@@ -1916,14 +1980,48 @@
               });
 
 
+          document.getElementById('multiplayer_game').addEventListener('change', populateWorldSelector);
+          document.getElementById('multiplayer_world').addEventListener('change', _updateNewWorldNameField);
+
           const launchServer = document.getElementById('launch_server');
           launchServer.addEventListener('click', async () => {
               const proxyIndex = document.getElementById('select_proxy').value;
               const username = document.getElementById('multiplayer_username').value;
               const game = document.getElementById('multiplayer_game').value;
+              const worldId = document.getElementById('multiplayer_world').value;
+              let worldArg = null;  // { flag, value } to append to args.extra
               if (username.length == 0) {
                   alert("Empty username");
                   return;
+              }
+              // If "New world" is selected, validate and build --world <path>
+              if (worldId === '') {
+                  const nameInput = document.getElementById('new_world_name');
+                  const nameErr = document.getElementById('new_world_name_err');
+                  const rawName = nameInput ? nameInput.value.trim() : '';
+                  if (!rawName) {
+                      if (nameErr) { nameErr.textContent = 'Please enter a world name.'; nameErr.style.display = ''; }
+                      nameInput && nameInput.focus();
+                      return;
+                  }
+                  // Sanitize into a safe directory name
+                  const safeName = rawName.replace(/[^A-Za-z0-9_\-. ]/g, '').trim().replace(/\s+/g, '_') || 'world';
+                  // Check for collision against existing dir names and display titles
+                  const conflict = _allPersistedWorlds.find(
+                      w => w.id.toLowerCase() === safeName.toLowerCase() ||
+                           w.title.toLowerCase() === rawName.toLowerCase()
+                  );
+                  if (conflict) {
+                      if (nameErr) { nameErr.textContent = `A world named "${conflict.title}" already exists. Choose a different name.`; nameErr.style.display = ''; }
+                      nameInput && nameInput.focus();
+                      return;
+                  }
+                  if (nameErr) { nameErr.style.display = 'none'; nameErr.textContent = ''; }
+                  // --world <full path> tells Minetest to create a new world directory there
+                  worldArg = { flag: '--world', value: '/minetest/worlds/' + safeName };
+              } else {
+                  // Existing world — select by directory name
+                  worldArg = { flag: '--worldname', value: worldId };
               }
 
               wipePage();
@@ -1942,6 +2040,7 @@
               args.address = '127.0.0.1';
               args.port = 30000;
               args.go = true;
+              if (worldArg) args.extra.push(worldArg.flag, worldArg.value);
               history.pushState({}, "", `?proxy=${proxyIndex}&game=${game}&join=${clientCode}`);
               window._p2pVoiceRoom = 'p2p-' + clientCode;
               mtl.setVPN(serverCode, clientCode);
@@ -2438,7 +2537,7 @@
                   row.innerHTML = `
                       <span class="invite-banner-text"><strong>${escHtml(inv.from_username)}</strong> invited you to join their game!</span>
                       <div class="friend-actions">
-                          <button class="friend-btn-accept" onclick="friendsAcceptInvite(${inv.id}, '${escHtml(inv.server_address)}', ${inv.server_port})">Join</button>
+                          <button class="friend-btn-accept" onclick="friendsAcceptInvite(${inv.id}, '${escHtml(inv.server_address)}', ${inv.server_port}, '${escHtml(inv.from_username)}')">Join</button>
                           <button class="friend-btn-decline" onclick="friendsDeclineInvite(${inv.id})">Ignore</button>
                       </div>`;
                   invList.appendChild(row);
@@ -2534,10 +2633,12 @@
       }
 
       // ─── Invites ────────────────────────────────────────────────────────────
-      async function friendsAcceptInvite(inviteId, serverAddress, serverPort) {
+      async function friendsAcceptInvite(inviteId, serverAddress, serverPort, fromUsername) {
           const u = etherdeckAuth.getUsername(); if (!u) return;
           await friendsRequest('respond_invite', { username: u, invite_id: inviteId, response: 'accept' });
           friendsPoll();
+          // Store friend's name so launch() can name the voice room after them
+          if (fromUsername) window._pendingVoiceFriendName = fromUsername;
           // Pre-fill the player name
           const playerNameInput = document.getElementById('multiplayer_username') || document.getElementById('player_name');
           if (playerNameInput) playerNameInput.value = u;
