@@ -9,7 +9,6 @@ sources/libpng
 sources/freetype
 sources/zstd
 sources/webshims
-sources/minetest
 sources/irrlichtmt
 sources/minetest_game
 emsdk/
