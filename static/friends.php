@@ -97,6 +97,14 @@ function userExists($db, $username) {
     return (bool)$s->execute()->fetchArray();
 }
 
+function require_token($db, $username, $token) {
+    if (empty($username) || empty($token)) response(false, 'Authentication required');
+    $s = $db->prepare('SELECT id FROM users WHERE username=:u AND auth_token=:t');
+    $s->bindValue(':u', $username, SQLITE3_TEXT);
+    $s->bindValue(':t', $token,    SQLITE3_TEXT);
+    if (!$s->execute()->fetchArray()) response(false, 'Authentication required');
+}
+
 // ── Request data ──────────────────────────────────────────────────────────────
 $data   = json_decode(file_get_contents('php://input'), true) ?? [];
 $action = $_GET['action'] ?? '';
@@ -106,11 +114,14 @@ $action = $_GET['action'] ?? '';
 // ─────────────────────────────────────────────────────────────────────────────
 if ($action === 'update_status') {
     $username = trim($data['username'] ?? '');
+    $token    = trim($data['token']    ?? '');
     $online   = !empty($data['online']) ? 1 : 0;
     $addr     = trim($data['server_address'] ?? '');
     $port     = (int)($data['server_port'] ?? 0);
 
     if (empty($username)) response(false, 'username required');
+    require_token($db, $username, $token);
+    if ($addr !== '' && !preg_match('/^[a-zA-Z0-9.\-:]+$/', $addr)) response(false, 'Invalid server_address');
 
     $s = $db->prepare('
         INSERT INTO user_status (username, online, server_address, server_port, last_seen)
@@ -133,10 +144,12 @@ if ($action === 'update_status') {
 // FRIENDS — send request
 // ─────────────────────────────────────────────────────────────────────────────
 if ($action === 'send_request') {
-    $from = trim($data['from_username'] ?? '');
-    $to   = trim($data['to_username']   ?? '');
+    $from  = trim($data['from_username'] ?? '');
+    $to    = trim($data['to_username']   ?? '');
+    $token = trim($data['token']         ?? '');
 
     if (empty($from) || empty($to)) response(false, 'Both usernames required');
+    require_token($db, $from, $token);
     if ($from === $to) response(false, 'Cannot add yourself');
     if (!userExists($db, $to)) response(false, 'User not found');
     if (areFriends($db, $from, $to)) response(false, 'Already friends');
@@ -170,7 +183,9 @@ if ($action === 'send_request') {
 // ─────────────────────────────────────────────────────────────────────────────
 if ($action === 'get_requests') {
     $username = trim($data['username'] ?? '');
+    $token    = trim($data['token']    ?? '');
     if (empty($username)) response(false, 'username required');
+    require_token($db, $username, $token);
 
     $s = $db->prepare('
         SELECT fr.id, fr.from_username, fr.created_at
@@ -191,8 +206,10 @@ if ($action === 'get_requests') {
 if ($action === 'accept_request') {
     $username = trim($data['username']      ?? '');
     $from     = trim($data['from_username'] ?? '');
+    $token    = trim($data['token']         ?? '');
 
     if (empty($username) || empty($from)) response(false, 'Both usernames required');
+    require_token($db, $username, $token);
 
     $del = $db->prepare('DELETE FROM friend_requests WHERE from_username=:from AND to_username=:to');
     $del->bindValue(':from', $from,     SQLITE3_TEXT);
@@ -210,7 +227,9 @@ if ($action === 'accept_request') {
 if ($action === 'decline_request') {
     $username = trim($data['username']      ?? '');
     $from     = trim($data['from_username'] ?? '');
+    $token    = trim($data['token']         ?? '');
 
+    require_token($db, $username, $token);
     $del = $db->prepare('DELETE FROM friend_requests WHERE from_username=:from AND to_username=:to');
     $del->bindValue(':from', $from,     SQLITE3_TEXT);
     $del->bindValue(':to',   $username, SQLITE3_TEXT);
@@ -223,7 +242,9 @@ if ($action === 'decline_request') {
 // ─────────────────────────────────────────────────────────────────────────────
 if ($action === 'get_friends') {
     $username = trim($data['username'] ?? '');
+    $token    = trim($data['token']    ?? '');
     if (empty($username)) response(false, 'username required');
+    require_token($db, $username, $token);
 
     $s = $db->prepare('
         SELECT
@@ -259,7 +280,9 @@ if ($action === 'get_friends') {
 if ($action === 'remove_friend') {
     $username = trim($data['username']        ?? '');
     $friend   = trim($data['friend_username'] ?? '');
+    $token    = trim($data['token']           ?? '');
 
+    require_token($db, $username, $token);
     list($u1, $u2) = $username < $friend ? [$username, $friend] : [$friend, $username];
     $del = $db->prepare('DELETE FROM friendships WHERE user1=:u1 AND user2=:u2');
     $del->bindValue(':u1', $u1, SQLITE3_TEXT);
@@ -275,8 +298,10 @@ if ($action === 'send_message') {
     $from    = trim($data['from_username'] ?? '');
     $to      = trim($data['to_username']   ?? '');
     $message = trim($data['message']       ?? '');
+    $token   = trim($data['token']         ?? '');
 
     if (empty($from) || empty($to) || empty($message)) response(false, 'Missing fields');
+    require_token($db, $from, $token);
     if (!areFriends($db, $from, $to)) response(false, 'Not friends');
     if (mb_strlen($message) > 2000) response(false, 'Message too long (max 2000 chars)');
 
@@ -295,8 +320,10 @@ if ($action === 'get_messages') {
     $username = trim($data['username']        ?? '');
     $friend   = trim($data['friend_username'] ?? '');
     $sinceId  = (int)($data['since_id'] ?? 0);
+    $token    = trim($data['token']     ?? '');
 
     if (empty($username) || empty($friend)) response(false, 'Missing fields');
+    require_token($db, $username, $token);
 
     $s = $db->prepare('
         SELECT id, from_username, to_username, message, created_at
@@ -327,7 +354,9 @@ if ($action === 'get_messages') {
 // ─────────────────────────────────────────────────────────────────────────────
 if ($action === 'get_unread_counts') {
     $username = trim($data['username'] ?? '');
+    $token    = trim($data['token']    ?? '');
     if (empty($username)) response(false, 'username required');
+    require_token($db, $username, $token);
 
     $s = $db->prepare('
         SELECT from_username, COUNT(*) AS cnt
@@ -346,12 +375,15 @@ if ($action === 'get_unread_counts') {
 // INVITES — send
 // ─────────────────────────────────────────────────────────────────────────────
 if ($action === 'send_invite') {
-    $from = trim($data['from_username']  ?? '');
-    $to   = trim($data['to_username']    ?? '');
-    $addr = trim($data['server_address'] ?? '');
-    $port = (int)($data['server_port']   ?? 0);
+    $from  = trim($data['from_username']  ?? '');
+    $to    = trim($data['to_username']    ?? '');
+    $addr  = trim($data['server_address'] ?? '');
+    $port  = (int)($data['server_port']   ?? 0);
+    $token = trim($data['token']          ?? '');
 
     if (empty($from) || empty($to) || empty($addr)) response(false, 'Missing fields');
+    require_token($db, $from, $token);
+    if (!preg_match('/^[a-zA-Z0-9.\-:]+$/', $addr)) response(false, 'Invalid server_address');
     if (!areFriends($db, $from, $to)) response(false, 'Not friends');
 
     // Remove any existing pending invite from this sender to this recipient
@@ -374,7 +406,9 @@ if ($action === 'send_invite') {
 // ─────────────────────────────────────────────────────────────────────────────
 if ($action === 'get_invites') {
     $username = trim($data['username'] ?? '');
+    $token    = trim($data['token']    ?? '');
     if (empty($username)) response(false, 'username required');
+    require_token($db, $username, $token);
 
     // Auto-expire invites older than 30 minutes
     $db->exec("DELETE FROM invites WHERE created_at < datetime('now', '-30 minutes')");
@@ -398,10 +432,12 @@ if ($action === 'respond_invite') {
     $username  = trim($data['username']   ?? '');
     $inviteId  = (int)($data['invite_id'] ?? 0);
     $resp      = trim($data['response']   ?? '');
+    $token     = trim($data['token']      ?? '');
 
     if (empty($username) || !$inviteId || !in_array($resp, ['accept', 'decline'])) {
         response(false, 'Missing or invalid fields');
     }
+    require_token($db, $username, $token);
 
     $sel = $db->prepare('SELECT * FROM invites WHERE id=:id AND to_username=:u');
     $sel->bindValue(':id', $inviteId,  SQLITE3_INTEGER);
@@ -430,7 +466,9 @@ if ($action === 'respond_invite') {
 // ─────────────────────────────────────────────────────────────────────────────
 if ($action === 'poll') {
     $username = trim($data['username'] ?? '');
+    $token    = trim($data['token']    ?? '');
     if (empty($username)) response(false, 'username required');
+    require_token($db, $username, $token);
 
     // Auto-expire old invites
     $db->exec("DELETE FROM invites WHERE created_at < datetime('now', '-30 minutes')");

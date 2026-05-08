@@ -51,6 +51,16 @@ if (!$hasEmail) {
     $db->exec('ALTER TABLE users ADD COLUMN email TEXT DEFAULT NULL');
 }
 
+// Migrate: add auth_token column if missing
+$hasToken = false;
+$tableInfo2 = $db->query("PRAGMA table_info(users)");
+while ($col = $tableInfo2->fetchArray(SQLITE3_ASSOC)) {
+    if ($col['name'] === 'auth_token') { $hasToken = true; break; }
+}
+if (!$hasToken) {
+    $db->exec('ALTER TABLE users ADD COLUMN auth_token TEXT DEFAULT NULL');
+}
+
 // Get request data
 $data = json_decode(file_get_contents('php://input'), true) ?? [];
 $action = $_GET['action'] ?? '';
@@ -63,6 +73,18 @@ function response($success, $message, $data = null) {
         'data'    => $data
     ]);
     exit;
+}
+
+function verifyToken($db, $username, $token) {
+    if (empty($username) || empty($token)) return false;
+    $s = $db->prepare('SELECT id FROM users WHERE username=:u AND auth_token=:t');
+    $s->bindValue(':u', $username, SQLITE3_TEXT);
+    $s->bindValue(':t', $token,    SQLITE3_TEXT);
+    return (bool)$s->execute()->fetchArray();
+}
+
+function requireToken($db, $username, $token) {
+    if (!verifyToken($db, $username, $token)) response(false, 'Authentication required');
 }
 
 // ─────────────────────────────────────────────
@@ -101,16 +123,19 @@ if ($action === 'register') {
     }
 
     $hashed = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $db->prepare('INSERT INTO users (username, email, password) VALUES (:username, :email, :password)');
+    $token  = bin2hex(random_bytes(32));
+    $stmt = $db->prepare('INSERT INTO users (username, email, password, auth_token) VALUES (:username, :email, :password, :token)');
     $stmt->bindValue(':username', $username, SQLITE3_TEXT);
     $stmt->bindValue(':email',    $email,    SQLITE3_TEXT);
     $stmt->bindValue(':password', $hashed,   SQLITE3_TEXT);
+    $stmt->bindValue(':token',    $token,    SQLITE3_TEXT);
 
     if ($stmt->execute()) {
         response(true, 'Registration successful', [
             'username' => $username,
             'email'    => $email,
-            'is_admin' => false
+            'is_admin' => false,
+            'token'    => $token,
         ]);
     } else {
         response(false, 'Registration failed');
@@ -140,10 +165,16 @@ if ($action === 'login') {
     }
 
     if (password_verify($password, $user['password'])) {
+        $token = bin2hex(random_bytes(32));
+        $upd = $db->prepare('UPDATE users SET auth_token=:t WHERE username=:u');
+        $upd->bindValue(':t', $token,            SQLITE3_TEXT);
+        $upd->bindValue(':u', $user['username'],  SQLITE3_TEXT);
+        $upd->execute();
         response(true, 'Login successful', [
             'username' => $user['username'],
             'email'    => $user['email'],
-            'is_admin' => (bool)$user['is_admin']
+            'is_admin' => (bool)$user['is_admin'],
+            'token'    => $token,
         ]);
     } else {
         response(false, 'Invalid username/email or password');
@@ -155,11 +186,13 @@ if ($action === 'login') {
 // ─────────────────────────────────────────────
 if ($action === 'add_email') {
     $username = trim($data['username'] ?? '');
+    $token    = trim($data['token']    ?? '');
     $email    = strtolower(trim($data['email'] ?? ''));
 
     if (empty($username)) {
         response(false, 'Username is required');
     }
+    requireToken($db, $username, $token);
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         response(false, 'A valid email address is required');
     }
@@ -208,7 +241,11 @@ if ($action === 'check') {
 // Make user admin (dev/setup only)
 // ─────────────────────────────────────────────
 if ($action === 'make_admin') {
-    $username = trim($data['username'] ?? '');
+    $requestingUsername = trim($data['requesting_username'] ?? '');
+    $token              = trim($data['token']               ?? '');
+    $username           = trim($data['username']            ?? '');
+
+    requireAdmin($requestingUsername, $token);
 
     $stmt = $db->prepare('UPDATE users SET is_admin = 1 WHERE username = :username');
     $stmt->bindValue(':username', $username, SQLITE3_TEXT);
@@ -223,8 +260,9 @@ if ($action === 'make_admin') {
 // ─────────────────────────────────────────────
 // Admin helpers
 // ─────────────────────────────────────────────
-function requireAdmin($requestingUsername) {
+function requireAdmin($requestingUsername, $token) {
     global $db;
+    requireToken($db, $requestingUsername, $token);
     $stmt = $db->prepare('SELECT is_admin FROM users WHERE username = :username');
     $stmt->bindValue(':username', $requestingUsername, SQLITE3_TEXT);
     $user = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
@@ -237,7 +275,8 @@ function requireAdmin($requestingUsername) {
 // Get all users (admin only)
 if ($action === 'get_all_users') {
     $requestingUsername = trim($data['requesting_username'] ?? '');
-    requireAdmin($requestingUsername);
+    $token              = trim($data['token']               ?? '');
+    requireAdmin($requestingUsername, $token);
 
     $stmt = $db->query('SELECT id, username, email, is_admin, created_at FROM users ORDER BY created_at DESC');
     $users = [];
@@ -256,7 +295,8 @@ if ($action === 'get_all_users') {
 // Update user (admin only)
 if ($action === 'update_user') {
     $requestingUsername = trim($data['requesting_username'] ?? '');
-    requireAdmin($requestingUsername);
+    $token              = trim($data['token']               ?? '');
+    requireAdmin($requestingUsername, $token);
 
     $userId      = (int)($data['user_id'] ?? 0);
     $newUsername = trim($data['new_username'] ?? '');
@@ -327,7 +367,8 @@ if ($action === 'update_user') {
 // Delete user (admin only)
 if ($action === 'delete_user') {
     $requestingUsername = trim($data['requesting_username'] ?? '');
-    requireAdmin($requestingUsername);
+    $token              = trim($data['token']               ?? '');
+    requireAdmin($requestingUsername, $token);
 
     $userId = (int)($data['user_id'] ?? 0);
     if ($userId <= 0) {

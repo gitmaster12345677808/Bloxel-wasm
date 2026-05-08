@@ -1890,6 +1890,7 @@
               window._currentDirectServer = { address: server.address, port: parseInt(server.port) };
               setTimeout(() => friendsUpdateStatus(true, server.address, parseInt(server.port)), 800);
           }
+          window._vrJoinServer = joinServer;
 
           function renderServerList(servers) {
               const grid = document.getElementById('server_cards');
@@ -2241,13 +2242,15 @@
           }
 
           isLoggedIn()  { return this.currentUser !== null; }
+          isAdmin()     { return !!(this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.is_admin)); }
           getUsername() { return this.currentUser ? this.currentUser.username : null; }
           getPassword() { return this.currentUser ? this.currentUser.password : null; }
+          getToken()    { return this.currentUser ? (this.currentUser.token || null) : null; }
           getEmail()    { return this.currentUser ? (this.currentUser.email || null) : null; }
           hasEmail()    { return !!(this.currentUser && this.currentUser.email && this.currentUser.email.trim() !== ''); }
 
           async addEmail(email) {
-              const result = await this.request('add_email', { email, username: this.currentUser.username });
+              const result = await this.request('add_email', { email, username: this.currentUser.username, token: this.currentUser.token });
               if (result.success) {
                   this.currentUser.email = email;
                   this.saveSession();
@@ -2280,11 +2283,14 @@
                       el.style.cursor  = '';
                   });
               }
+              const fmBtn = document.getElementById('file_mgr_btn');
+              if (fmBtn) fmBtn.style.display = this.isAdmin() ? '' : 'none';
               if (typeof checkAuthState === 'function') checkAuthState();
           }
       }
 
       const etherdeckAuth = new EtherDeckAuth();
+      window._etherdeckAuth = etherdeckAuth;
       // Sync sidebar label / player-name inputs to the restored session immediately.
       // updateUI() is only called after explicit login/logout normally, so without
       // this the sidebar still shows "Sign In" after a page reload even though the
@@ -2461,11 +2467,13 @@
       const FRIENDS_POLL_MS = 8000;
 
       async function friendsRequest(action, data) {
+          const token = etherdeckAuth.getToken();
+          const payload = token ? { ...data, token } : data;
           try {
               const r = await fetch(`${FRIENDS_API}?action=${action}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(data)
+                  body: JSON.stringify(payload)
               });
               return await r.json();
           } catch (e) {
@@ -2556,7 +2564,7 @@
       }
 
       function escHtml(s) {
-          return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+          return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
       }
 
       function renderFriendsList() {
@@ -2767,6 +2775,7 @@
       // ===== end Friends System =====
 
       const mtl = new MinetestLauncher();
+      window._mtl = mtl;
       mtl.addPacks(args.packs);
       mtl.onprint = (text) => {
           tcon_print("", text);
@@ -3107,7 +3116,113 @@
       }
 
       buildSettingsUI();
+      window._gameSettingsGroups  = GAME_SETTINGS_GROUPS;
+      window._loadStoredSettings  = loadStoredSettings;
+      window._saveStoredSettings  = saveStoredSettings;
       // ===== end Game Settings Engine =====
+
+      // ===== VR Relaunch Cleanup =====
+      // Called before re-entering VRWebsiteMode so the game can launch again
+      // without a page reload. The WASM module stays loaded (noExitRuntime=true
+      // keeps the runtime alive after main() exits); we only reset the JS-side
+      // scheduler state that blocks a second call to MinetestLauncher.launch().
+      window._vrCleanupForRelaunch = async function() {
+          console.log('[vr-cleanup] Resetting JS launch state for re-launch…');
+
+          // Wipe the game body so VRWebsiteMode starts with a clean DOM.
+          // mtCanvas itself is NOT recreated — its WebGL context must survive
+          // DOM detachment so activateBody() can re-attach it for the next run.
+          document.body.innerHTML = '';
+          document.body.style = '';
+          document.body.className = '';
+
+          // Reset the two scheduler conditions that block a second launch.
+          // 'ready' and 'wasmReady' stay true (WASM is still loaded).
+          // For main_called we only need 'launch_called' as a dep because
+          // 'ready' is already true and setCondition('ready') won't fire again
+          // to clear it from a dep-set — passing it would permanently block callMain.
+          try {
+              if (mtScheduler.isSet('main_called'))
+                  mtScheduler.clearCondition('main_called', callMain, ['launch_called']);
+          } catch(e) { console.warn('[vr-cleanup] main_called reset skipped:', e.message); }
+          try {
+              if (mtScheduler.isSet('launch_called'))
+                  mtScheduler.clearCondition('launch_called');
+          } catch(e) { console.warn('[vr-cleanup] launch_called reset skipped:', e.message); }
+
+          // Minimal hidden form that VRWebsiteMode play_launch needs
+          const formDiv = document.createElement('div');
+          formDiv.id = 'vr_relaunch_form';
+          formDiv.style.display = 'none';
+          formDiv.innerHTML =
+              '<input id="player_name" type="text">' +
+              '<input id="multiplayer_username" type="text">' +
+              '<input id="multiplayer_game" type="text" value="minetest_game">' +
+              '<select id="multiplayer_world"><option value="">+ New World...</option></select>' +
+              '<input id="new_world_name" type="text">' +
+              '<button id="launch_server">Launch</button>';
+          document.body.appendChild(formDiv);
+          // Propagate auth state (fills username inputs, sets readOnly, shows/hides file mgr)
+          etherdeckAuth.updateUI();
+
+          // Populate world list from OPFS
+          try {
+              _allPersistedWorlds = await (window.listPersistedWorlds
+                  ? window.listPersistedWorlds() : Promise.resolve([]));
+              populateWorldSelector();
+          } catch(e) { console.warn('[vr-cleanup] world list error:', e); }
+
+          // Reuse the existing launcher — it already has the WASM ready.
+          // launch() clears its own internal state and calls activateBody().
+          const mtl = window._mtl;
+          const defaultProxy = 'wss://tjcr.ngrok-free.app';
+
+          document.getElementById('launch_server').addEventListener('click', async () => {
+              const username = (document.getElementById('multiplayer_username')?.value || '').trim();
+              if (!username) return;
+
+              const worldId = document.getElementById('multiplayer_world')?.value || '';
+              let worldFlag, worldVal;
+              if (worldId === '') {
+                  const rawName  = (document.getElementById('new_world_name')?.value || '').trim() || 'world';
+                  const safeName = rawName.replace(/[^A-Za-z0-9_\-. ]/g, '').trim().replace(/\s+/g, '_') || 'world';
+                  worldFlag = '--world';     worldVal = '/minetest/worlds/' + safeName;
+              } else {
+                  worldFlag = '--worldname'; worldVal = worldId;
+              }
+
+              let serverCode, clientCode;
+              try {
+                  const [cmd, sc, cc] = await queryProxy('MAKEVPN minetest_game', defaultProxy);
+                  if (cmd !== 'NEWVPN') throw new Error('unexpected proxy response');
+                  serverCode = sc; clientCode = cc;
+              } catch(e) {
+                  console.error('[vr-launch2] proxy error:', e);
+                  return;
+              }
+
+              const launchArgs = new MinetestArgs();
+              launchArgs.extra.push('--withserver');
+              launchArgs.gameid   = 'minetest_game';
+              launchArgs.name     = username;
+              launchArgs.password = etherdeckAuth.getPassword ? etherdeckAuth.getPassword() : '';
+              launchArgs.address  = '127.0.0.1';
+              launchArgs.port     = 30000;
+              launchArgs.go       = true;
+              launchArgs.extra.push(worldFlag, worldVal);
+
+              mtl.setVPN(serverCode, clientCode);
+              mtl.setProxy(defaultProxy);
+              applyUserSettings(mtl);
+              applyDeviceDefaults(mtl);
+              // launch() calls activateBody() then setCondition('launch_called')
+              // which triggers callMain → emloop_invoke_main (second call, runtime alive)
+              mtl.launch(launchArgs);
+          });
+
+          console.log('[vr-cleanup] Done');
+      };
+      // ===== end VR Relaunch Cleanup =====
 
             setupInstallPanel();
     </script>

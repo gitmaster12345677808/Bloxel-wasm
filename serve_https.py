@@ -9,6 +9,8 @@ import http.server
 import mimetypes
 import pathlib
 import ssl
+import urllib.parse
+import urllib.request
 
 
 # Errors that mean the client simply hung up — not real server errors.
