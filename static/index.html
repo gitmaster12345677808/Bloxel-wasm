@@ -1846,7 +1846,7 @@
 
           const select_proxy = document.getElementById('select_proxy');
           const proxies = [
-              [ "wss://tjcr.ngrok-free.app", "Default" ],
+              [ `wss://${location.host}/proxy`, "Local (this server)" ],
               [ "wss://na1.dustlabs.io/mtproxy", "North America" ],
               [ "wss://sa1.dustlabs.io/mtproxy", "South America" ],
               [ "wss://eu1.dustlabs.io/mtproxy", "Europe" ],
@@ -2158,6 +2158,8 @@
           join_code = peek_params.get("join");
           join_game = peek_params.get("game");
           join_proxy = peek_params.get("proxy");
+          // Strip stale join params from URL so a page reload doesn't reuse a dead VPN code
+          history.replaceState({}, '', window.location.pathname);
       }
 
       function parseJoinCode(raw) {
@@ -2183,7 +2185,7 @@
       // ===== EtherDeck Auth =====
       class EtherDeckAuth {
           constructor() {
-              this.apiUrl = 'https://bloxel.ngrok.io/auth.php';
+              this.apiUrl = '/api/auth';
               this.currentUser = null;
               this.loadSession();
           }
@@ -2241,6 +2243,30 @@
               }
           }
 
+          async refreshSession() {
+              if (!this.currentUser || !this.currentUser.token) return;
+              try {
+                  const resp = await fetch(`${this.apiUrl}?action=me`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ token: this.currentUser.token })
+                  });
+                  if (resp.status === 401) {
+                      // Token definitively rejected by server — clear stale session
+                      this.logout();
+                      return;
+                  }
+                  if (!resp.ok) return; // Server/network error — keep session, try again next reload
+                  const result = await resp.json();
+                  if (result.success) {
+                      Object.assign(this.currentUser, result.data);
+                      this.saveSession();
+                  }
+              } catch (_) {
+                  // Network error — keep session
+              }
+          }
+
           isLoggedIn()  { return this.currentUser !== null; }
           isAdmin()     { return !!(this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.is_admin)); }
           getUsername() { return this.currentUser ? this.currentUser.username : null; }
@@ -2292,10 +2318,10 @@
       const etherdeckAuth = new EtherDeckAuth();
       window._etherdeckAuth = etherdeckAuth;
       // Sync sidebar label / player-name inputs to the restored session immediately.
-      // updateUI() is only called after explicit login/logout normally, so without
-      // this the sidebar still shows "Sign In" after a page reload even though the
-      // session was successfully loaded from localStorage.
       etherdeckAuth.updateUI();
+      // Re-fetch current user data (including live is_admin) in the background.
+      // This catches promotions that happened while the session was cached locally.
+      etherdeckAuth.refreshSession();
 
       // ===== Auth screen helpers =====
       let _authMode = 'signin';
@@ -2390,7 +2416,7 @@
                       if (result.success) {
                           showAuthMsg('Account created! Signing you in\u2026', false);
                       } else {
-                          showAuthMsg(result.message, true);
+                          showAuthMsg(result.error || result.message || 'Registration failed.', true);
                       }
                       submitBtn.disabled = false; submitBtn.textContent = 'Create Account';
                   } else {
@@ -2401,7 +2427,7 @@
                       if (result.success) {
                           showAuthMsg('Signed in!', false);
                       } else {
-                          showAuthMsg(result.message, true);
+                          showAuthMsg(result.error || result.message || 'Login failed.', true);
                       }
                       submitBtn.disabled = false; submitBtn.textContent = 'Sign In';
                   }
@@ -2459,7 +2485,7 @@
       // ===== end EtherDeck Auth =====
 
       // ===== Friends System =====
-      const FRIENDS_API = 'https://bloxel.ngrok.io/friends.php';
+      const FRIENDS_API = '/api/friends';
       let _friendsList   = [];
       let _friendsUnread = {};
       let _friendsChat   = { open: false, username: null, lastId: 0, pollTimer: null };
@@ -2468,7 +2494,7 @@
 
       async function friendsRequest(action, data) {
           const token = etherdeckAuth.getToken();
-          const payload = token ? { ...data, token } : data;
+          const payload = token ? { ...data, auth_token: token, token } : data;
           try {
               const r = await fetch(`${FRIENDS_API}?action=${action}`, {
                   method: 'POST',
@@ -2498,8 +2524,8 @@
           const r = await friendsRequest('poll', { username: u });
           if (!r.success) return;
           const d = r.data;
-          _friendsList   = d.friends      || [];
-          _friendsUnread = d.unread       || {};
+          _friendsList   = d.friends || [];
+          _friendsUnread = d.unread  || {};
 
           // Update badge
           const totalUnread    = Object.values(_friendsUnread).reduce((a, b) => a + b, 0);
@@ -2545,7 +2571,7 @@
                   row.innerHTML = `
                       <span class="invite-banner-text"><strong>${escHtml(inv.from_username)}</strong> invited you to join their game!</span>
                       <div class="friend-actions">
-                          <button class="friend-btn-accept" onclick="friendsAcceptInvite(${inv.id}, '${escHtml(inv.server_address)}', ${inv.server_port}, '${escHtml(inv.from_username)}')">Join</button>
+                          <button class="friend-btn-accept" onclick="friendsAcceptInvite(${inv.id}, '${escHtml(inv.server_address)}', ${inv.port}, '${escHtml(inv.from_username)}')">Join</button>
                           <button class="friend-btn-decline" onclick="friendsDeclineInvite(${inv.id})">Ignore</button>
                       </div>`;
                   invList.appendChild(row);
@@ -2587,7 +2613,7 @@
               // Show a Join button only for direct (non-P2P) servers — P2P URLs contain '?join='
               const isDirectServer = f.online && f.server_address && !f.server_address.includes('?join=') && !f.server_address.includes('://');
               const joinBtn = isDirectServer
-                  ? `<button class="friend-btn-join" onclick="joinServer({address:'${escHtml(f.server_address)}',port:${parseInt(f.server_port)||30000}})">Join</button>`
+                  ? `<button class="friend-btn-join" onclick="joinServer({address:'${escHtml(f.server_address)}',port:${parseInt(f.port)||30000}})">Join</button>`
                   : '';
               row.innerHTML = `
                   <span class="friend-dot ${f.online ? 'online' : ''}"></span>
@@ -2705,13 +2731,13 @@
           const r = await friendsRequest('get_messages', {
               username: u, friend_username: _friendsChat.username, since_id: _friendsChat.lastId
           });
-          if (!r.success || !r.data.length) return;
+          if (!r.success || !r.data || !r.data.length) return;
           const msgsEl = document.getElementById('friend_chat_msgs');
           r.data.forEach(m => {
               if (m.id > _friendsChat.lastId) _friendsChat.lastId = m.id;
               const div = document.createElement('div');
               div.className = 'chat-msg ' + (m.from_username === u ? 'mine' : 'theirs');
-              const t = new Date(m.created_at + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const t = m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
               div.innerHTML = `${escHtml(m.message)}<div class="chat-msg-time">${t}</div>`;
               if (msgsEl) msgsEl.appendChild(div);
           });
@@ -3175,7 +3201,7 @@
           // Reuse the existing launcher — it already has the WASM ready.
           // launch() clears its own internal state and calls activateBody().
           const mtl = window._mtl;
-          const defaultProxy = 'wss://tjcr.ngrok-free.app';
+          const defaultProxy = `wss://${location.host}/proxy`;
 
           document.getElementById('launch_server').addEventListener('click', async () => {
               const username = (document.getElementById('multiplayer_username')?.value || '').trim();

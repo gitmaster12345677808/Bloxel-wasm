@@ -1,6 +1,8 @@
 #!/bin/bash -eux
 
 source common.sh
+# Serve from the Node server's public directory instead of www/
+WWW_DIR="$BASE_DIR/server/public"
 
 # Generate a random hash for this release
 # This is used as a prefix for cache invalidation
@@ -60,11 +62,7 @@ apply_substitutions htaccess_release "$RELEASE_DIR"/.htaccess
 apply_substitutions launcher.js "$RELEASE_DIR"/launcher.js
 apply_substitutions worker.js "$RELEASE_DIR"/worker.js
 apply_substitutions htaccess_packs "$PACKS_DIR"/.htaccess
-cp auth.php         "$WWW_DIR"/auth.php
-cp friends.php      "$WWW_DIR"/friends.php
-cp videos.php       "$WWW_DIR"/videos.php
-cp video_proxy.php  "$WWW_DIR"/video_proxy.php
-cp voice_signal.php "$WWW_DIR"/voice_signal.php
+# PHP files are no longer copied — API routes are handled by the Node server
 popd
 
 # Copy base file system pack

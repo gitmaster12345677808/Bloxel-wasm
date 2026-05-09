@@ -13,3 +13,14 @@ sources/webshims
 sources/irrlichtmt
 sources/minetest_game
 emsdk/
+
+# Node server — generated/sensitive files
+server/.env
+server/node_modules/
+server/certs/
+server/public/
+server/ws/node_modules/
+
+# Misc
+*.db
+python3

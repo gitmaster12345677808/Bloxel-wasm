@@ -1160,6 +1160,10 @@ function activateBody() {
     chatModeBtn = document.getElementById('chat_mode_btn');
     joinCodeBanner = document.getElementById('join_code_banner');
     joinCodeText = document.getElementById('join_code_text');
+
+    // file_mgr_btn lives inside rtHTML so it doesn't exist until this point
+    const fmBtn = document.getElementById('file_mgr_btn');
+    if (fmBtn) fmBtn.style.display = window._etherdeckAuth?.isAdmin() ? '' : 'none';
     // Initialise WebXR VR manager for Meta Quest support
     window.vrManager = new WebXRManager();
     // Restore join code if already set before activateBody was called
@@ -2280,7 +2284,7 @@ class MinetestLauncher {
         this.vpn = null;
         this.serverCode = null;
         this.clientCode = null;
-        this.proxyUrl = "wss://bc3d.etherdeck.org/proxy";
+        this.proxyUrl = `wss://${location.host}/proxy`;
         this.packsDir = DEFAULT_PACKS_DIR;
         this.packsDirIsCors = false;
         this.minetestConf = new Map();
@@ -5409,7 +5413,7 @@ void main() { c = vec4(1.0, 0.4, 0.1, 1.0); }`;
 // VR:      Y-menu "Video" button opens Quest keyboard; WebXRManager samples _vid directly.
 // Both modes: arrow keys adjust distance (1–8 m); server polls for panels dropped by others.
 
-const BLOXEL_API_BASE = 'https://bloxel.ngrok.io';
+const BLOXEL_API_BASE = '';
 
 class VideoScreen {
     constructor() {
@@ -5578,7 +5582,7 @@ class VideoScreen {
         this._url    = url;
         this._active = true;
         this._anchor = null;  // recalculate world-space anchor on next frame
-        this._vid.src    = BLOXEL_API_BASE + '/video_proxy.php?url=' + encodeURIComponent(url);
+        this._vid.src    = BLOXEL_API_BASE + '/api/video-proxy?url=' + encodeURIComponent(url);
         this._vid.muted  = false;
         this._vid.play().catch(() => {
             this._vid.muted = true;
@@ -5599,7 +5603,7 @@ class VideoScreen {
     _startPolling() {
         const poll = async () => {
             try {
-                const r = await fetch(BLOXEL_API_BASE + '/panels.php?action=list');
+                const r = await fetch(BLOXEL_API_BASE + '/api/panels');
                 if (!r.ok) return;
                 const d = await r.json();
                 const panels = d.panels || [];
@@ -5617,11 +5621,11 @@ class VideoScreen {
 
     async _dropForEveryone(url) {
         try {
-            const fd = new FormData();
-            fd.append('action', 'drop');
-            fd.append('url', url);
-            fd.append('title', url);
-            await fetch(BLOXEL_API_BASE + '/panels.php', { method: 'POST', body: fd });
+            await fetch(BLOXEL_API_BASE + '/api/panels', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'drop', url, title: url }),
+            });
         } catch (_e) {}
     }
 
@@ -7286,7 +7290,7 @@ void main() { c = vec4(0.3, 0.75, 1.0, 0.85); }`;
                         this._siUsername=''; this._siPassword=''; this._siMsg='';
                         this._tab='account';
                     } else {
-                        this._siMsg='!'+(res.message||'Login failed');
+                        this._siMsg='!'+(res.message||res.error||'Login failed');
                     }
                     this._dirty=true;
                 })
