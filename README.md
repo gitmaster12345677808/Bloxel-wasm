@@ -170,10 +170,26 @@ An external Emscripten may need to be patched once:
 Mobile / PWA
 ------------
 
-The app is installable as a PWA on Android and can be added to the home screen on iOS. Touch-first controls are not yet implemented — a keyboard, mouse, or controller is still needed for gameplay on most mobile browsers.
+The app is installable as a PWA on Android and can be added to the home screen on iOS.Touch controlls are fully implemented
 
+🚀 What's New (VR Update)
 
-VR
---
+Bloxel now supports Virtual Reality!
+This release adds full VR integration via WebXR, bringing immersive first-person gameplay to compatible headsets (Meta Quest, Valve Index, HTC Vive, etc.) – all inside your browser.
 
-VR is not supported. The current port uses the standard browser canvas and would require explicit WebXR integration in the engine and render loop.
+✅ What’s included:
+
+    WebXR-based VR mode – Enter VR directly from the web page
+
+    Motion controller support – Use your hands to interact, build, and navigate
+
+    Seamless fallback – Game works normally on desktop if no headset is detected
+
+    Voice chat – Talk with other players without leaving VR
+
+    Full Luanti engine compatibility – Blocks, physics, and multiplayer all work in VR
+
+    Note: The standard Luanti web port uses a basic canvas without VR. Bloxel implements explicit WebXR integration in the engine and render loop – making this the first Luanti‑on‑web experience with proper VR support.
+
+How to use:
+Connect a WebXR‑compatible headset, open the Bloxel web page, and click the Enter VR button (or headset‑native entry prompt).
