@@ -1,4 +1,13 @@
 import 'dotenv/config';
+
+// Patch console.log so any output clears the status line first, then redraws it
+const _origLog = console.log.bind(console);
+console.log = (...args) => {
+  process.stdout.write('\r\x1b[K');
+  _origLog(...args);
+  // Signal friends.js to redraw the status line if it's loaded
+  if (typeof global._drawPresenceStatus === 'function') global._drawPresenceStatus();
+};
 import { createServer }              from 'https';
 import { readFileSync, writeFileSync,
          existsSync, mkdirSync }      from 'fs';
@@ -15,6 +24,7 @@ import authRouter                     from './routes/auth.js';
 import friendsRouter                  from './routes/friends.js';
 import panelsRouter                   from './routes/panels.js';
 import videoProxyRouter               from './routes/videoProxy.js';
+import adminRouter                    from './routes/admin.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -57,14 +67,24 @@ app.use('/api/auth',        authRouter);
 app.use('/api/friends',     friendsRouter);
 app.use('/api/panels',      panelsRouter);
 app.use('/api/video-proxy', videoProxyRouter);
+app.use('/admin',           adminRouter);
 app.get('/health', (_, res) => res.json({ ok: true }));
 
 // Serve built game from server/public/
 const publicDir = join(__dirname, 'public');
-app.use(express.static(publicDir));
+app.use(express.static(publicDir, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+    }
+  }
+}));
 
 // SPA fallback — send index.html for any non-API, non-file request
 app.get('*', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
   res.sendFile(join(publicDir, 'index.html'));
 });
 
@@ -77,8 +97,25 @@ const PROXY_PORT = WS_PROXY_PORT;
 const proxyDir   = join(__dirname, 'ws');
 const proxyProc  = spawn(process.execPath, ['main.js'], {
   cwd: proxyDir,
-  stdio: 'inherit',
+  stdio: ['inherit', 'pipe', 'pipe'],
 });
+
+// Route proxy output through console.log so the status line stays intact
+function _pipeProxyStream(stream) {
+  let buf = '';
+  stream.on('data', chunk => {
+    buf += chunk.toString();
+    let nl;
+    while ((nl = buf.indexOf('\n')) !== -1) {
+      const line = buf.slice(0, nl).replace(/\r$/, '');
+      buf = buf.slice(nl + 1);
+      // Suppress high-frequency VPN packet routing lines
+      if (line && !/\[CLIENT \d+\] \d+\.\d+\.\d+\.\d+:\d+ -> \d+\.\d+\.\d+\.\d+:\d+/.test(line)) console.log(line);
+    }
+  });
+}
+_pipeProxyStream(proxyProc.stdout);
+_pipeProxyStream(proxyProc.stderr);
 proxyProc.on('exit', code => console.log(`[proxy] process exited (${code})`));
 
 // ── WSS relay: browser → wss://.../proxy → ws://localhost:8888 ────────────

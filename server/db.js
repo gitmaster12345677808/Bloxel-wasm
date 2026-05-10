@@ -13,13 +13,13 @@ export async function getPool() {
 
 export async function query(sql, params = []) {
   const p = await getPool();
-  const [rows] = await p.execute(sql, params);
+  const [rows] = await p.query(sql, params);
   return rows;
 }
 
 async function migrate() {
   const p = await getPool();
-  await p.execute(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS users (
       id           INT AUTO_INCREMENT PRIMARY KEY,
       username     VARCHAR(64) NOT NULL UNIQUE,
@@ -30,7 +30,7 @@ async function migrate() {
       created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  await p.execute(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS friendships (
       id         INT AUTO_INCREMENT PRIMARY KEY,
       user_a     INT NOT NULL,
@@ -39,7 +39,7 @@ async function migrate() {
       UNIQUE KEY uniq_pair (user_a, user_b)
     )
   `);
-  await p.execute(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS friend_requests (
       id         INT AUTO_INCREMENT PRIMARY KEY,
       from_user  INT NOT NULL,
@@ -48,7 +48,7 @@ async function migrate() {
       UNIQUE KEY uniq_req (from_user, to_user)
     )
   `);
-  await p.execute(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS messages (
       id          INT AUTO_INCREMENT PRIMARY KEY,
       from_user   INT NOT NULL,
@@ -58,7 +58,7 @@ async function migrate() {
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  await p.execute(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS invites (
       id             INT AUTO_INCREMENT PRIMARY KEY,
       from_user      INT NOT NULL,
@@ -70,7 +70,7 @@ async function migrate() {
       UNIQUE KEY uniq_inv (from_user, to_user)
     )
   `);
-  await p.execute(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS user_status (
       user_id        INT PRIMARY KEY,
       online         TINYINT(1) DEFAULT 0,
@@ -79,7 +79,7 @@ async function migrate() {
       last_seen      DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  await p.execute(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS panels (
       id         INT AUTO_INCREMENT PRIMARY KEY,
       user_id    INT NOT NULL,
@@ -91,4 +91,17 @@ async function migrate() {
       UNIQUE KEY uniq_user (user_id)
     )
   `);
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS announcements (
+      id             INT AUTO_INCREMENT PRIMARY KEY,
+      message        TEXT NOT NULL,
+      target_user_id INT DEFAULT NULL,
+      created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  // Add columns introduced after initial schema (safe on existing tables)
+  await p.query(`ALTER TABLE users       ADD COLUMN IF NOT EXISTS banned               TINYINT(1)   NOT NULL DEFAULT 0`);
+  await p.query(`ALTER TABLE users       ADD COLUMN IF NOT EXISTS ban_reason           VARCHAR(500) DEFAULT NULL`);
+  await p.query(`ALTER TABLE users       ADD COLUMN IF NOT EXISTS voice_disabled       TINYINT(1)   NOT NULL DEFAULT 0`);
+  await p.query(`ALTER TABLE user_status ADD COLUMN IF NOT EXISTS last_announcement_id INT          NOT NULL DEFAULT 0`);
 }

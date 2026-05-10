@@ -906,6 +906,7 @@ function _getVoiceRoom() {
 }
 
 function _autoJoinVoice() {
+    if (window._etherdeckAuth?.currentUser?.voice_disabled) return;
     const room = _getVoiceRoom();
     const name = _voicePlayerName || 'Player';
     // Create a hidden background iframe so mic is live immediately without needing to open the panel
@@ -929,6 +930,7 @@ function _autoJoinVoice() {
 }
 
 function openVoiceWindow() {
+    if (window._etherdeckAuth?.currentUser?.voice_disabled) return;
     const panel = document.getElementById('sm_voice_panel');
     const btn   = document.getElementById('sm_voice_btn');
     if (!panel) return;
@@ -1164,6 +1166,9 @@ function activateBody() {
     // file_mgr_btn lives inside rtHTML so it doesn't exist until this point
     const fmBtn = document.getElementById('file_mgr_btn');
     if (fmBtn) fmBtn.style.display = window._etherdeckAuth?.isAdmin() ? '' : 'none';
+    // Hide voice button entirely for voice-disabled users
+    const vcBtn = document.getElementById('sm_voice_btn');
+    if (vcBtn && window._etherdeckAuth?.currentUser?.voice_disabled) vcBtn.style.display = 'none';
     // Initialise WebXR VR manager for Meta Quest support
     window.vrManager = new WebXRManager();
     // Restore join code if already set before activateBody was called
@@ -2463,13 +2468,15 @@ class MinetestLauncher {
         // Capture player name for voice chat before DOM is wiped
         if (this.args.name) _voicePlayerName = this.args.name;
         // Derive per-server voice room.
-        // Priority: friend's name (from invite) > join-code URL > server IP > default
-        if (window._pendingVoiceFriendName) {
-            _voiceRoom = _sanitizeVoiceRoom('bloxel-' + window._pendingVoiceFriendName);
-            delete window._pendingVoiceFriendName;
-        } else if (joinCodeUrl) {
-            _voiceRoom = _sanitizeVoiceRoom(joinCodeUrl);
-        } else if (this.args.address) {
+        // P2P joins (VPN/friend invite/join code): both host and joiner set
+        // _p2pVoiceRoom to 'p2p-' + the shared VPN client code, so they land
+        // in the same room.  Direct server connects fall back to the server IP
+        // (shared by everyone on that server).
+        delete window._pendingVoiceFriendName;
+        if (window._p2pVoiceRoom) {
+            _voiceRoom = _sanitizeVoiceRoom(window._p2pVoiceRoom);
+            delete window._p2pVoiceRoom;
+        } else if (this.args.address && this.args.address !== '127.0.0.1' && this.args.address !== '172.16.0.1') {
             _voiceRoom = _sanitizeVoiceRoom(this.args.address);
         } else {
             _voiceRoom = 'bloxelvoice';

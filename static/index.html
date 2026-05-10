@@ -557,9 +557,9 @@
 
             /* SERVER GRID — Wii channel tiles */
             .server-grid {
-                display: grid;
-                gap: 16px;
-                grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
             }
 
             .server-card {
@@ -568,80 +568,169 @@
                 border-radius: 16px;
                 overflow: hidden;
                 display: flex;
-                flex-direction: column;
-                box-shadow: 0 4px 14px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
-                transition: box-shadow 0.18s, transform 0.18s;
+                flex-direction: row;
+                align-items: center;
+                gap: 0;
+                padding: 10px 16px 10px 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.85);
+                transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
                 position: relative;
+                cursor: pointer;
             }
 
-            /* Wii gloss on cards */
+            /* Wii gloss */
             .server-card::before {
                 content: '';
                 position: absolute;
                 top: 0; left: 0; right: 0;
-                height: 44%;
-                background: linear-gradient(180deg, rgba(255,255,255,0.50) 0%, transparent 100%);
-                z-index: 1;
+                height: 50%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, transparent 100%);
+                z-index: 3;
                 pointer-events: none;
+                border-radius: 16px 16px 0 0;
             }
 
             [data-theme="dark"] .server-card::before {
-                background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+                background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
             }
 
             .server-card:hover {
-                box-shadow: 0 10px 28px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.85);
-                transform: translateY(-3px);
+                box-shadow: 0 8px 28px rgba(0,0,0,0.13), inset 0 1px 0 rgba(255,255,255,0.85);
+                transform: translateY(-2px);
+                border-color: var(--accent);
             }
 
+            /* Floating rounded thumbnail */
             .server-card-image {
-                height: 130px;
-                background: #c8d0e8;
+                width: 72px;
+                height: 72px;
+                flex-shrink: 0;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #2563eb 0%, #0f172a 100%);
                 background-size: cover;
                 background-position: center;
                 position: relative;
-                z-index: 0;
-            }
-
-            [data-theme="dark"] .server-card-image { background: #1e2438; }
-
-            .server-card-body {
-                padding: 14px;
                 display: flex;
-                flex-direction: column;
-                gap: 4px;
-                flex: 1;
-                position: relative;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+                overflow: hidden;
                 z-index: 2;
             }
 
-            .server-card-name  { font-size: 1rem; font-weight: 800; margin: 0; color: var(--text); }
-            .server-card-motd  { font-size: 0.8rem; color: var(--muted); font-style: italic; margin: 0; }
-            .server-card-desc  { font-size: 0.82rem; color: var(--muted); margin: 0; flex: 1; line-height: 1.4; }
+            [data-theme="dark"] .server-card-image {
+                background: linear-gradient(135deg, #1e3a6e 0%, #0d1117 100%);
+            }
+
+            .server-card-initial {
+                font-size: 2rem;
+                font-weight: 900;
+                color: rgba(255,255,255,0.35);
+                user-select: none;
+                pointer-events: none;
+                text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            }
+
+            .server-card-body {
+                padding: 0 14px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 2px;
+                flex: 1;
+                position: relative;
+                z-index: 2;
+                min-width: 0;
+            }
+
+            .server-card-name {
+                font-size: 0.97rem;
+                font-weight: 800;
+                margin: 0;
+                color: var(--text);
+                line-height: 1.25;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .server-card-motd {
+                font-size: 0.78rem;
+                color: var(--muted);
+                font-style: italic;
+                margin: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .server-card-desc {
+                font-size: 0.78rem;
+                color: var(--muted);
+                margin: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
 
             .server-card-footer {
                 display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 10px;
-                gap: 8px;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 6px;
+                flex-shrink: 0;
+                z-index: 2;
             }
 
-            .server-card-players { font-size: 0.78rem; color: var(--muted); font-weight: 700; }
+            .server-card-players {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 0.72rem;
+                color: var(--muted);
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            .server-card-players:not(:empty)::before {
+                content: '';
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #22c55e;
+                box-shadow: 0 0 5px #22c55e99;
+                display: inline-block;
+                animation: sc-pulse 2s ease-in-out infinite;
+            }
+
+            @keyframes sc-pulse {
+                0%,100% { box-shadow: 0 0 4px #22c55e88; }
+                50%      { box-shadow: 0 0 9px #22c55ecc; }
+            }
 
             .server-card-footer button {
-                min-height: 32px;
-                padding: 0 14px;
-                font-size: 0.83rem;
+                padding: 7px 18px;
+                font-size: 0.82rem;
+                font-weight: 700;
                 border-radius: 9px;
-                flex: 0 0 auto;
                 background: linear-gradient(180deg, #22d472 0%, #00934d 100%);
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                box-shadow: 0 2px 8px rgba(34,212,114,0.35);
+                transition: transform 0.15s, box-shadow 0.15s;
+                white-space: nowrap;
             }
 
-            .server-card.color-red    .server-card-image { border-top: 3px solid #ef4444; }
-            .server-card.color-blue   .server-card-image { border-top: 3px solid #3b82f6; }
-            .server-card.color-yellow .server-card-image { border-top: 3px solid #eab308; }
-            .server-card.color-green  .server-card-image { border-top: 3px solid var(--accent); }
+            .server-card-footer button:hover {
+                transform: scale(1.06);
+                box-shadow: 0 4px 16px rgba(34,212,114,0.55);
+            }
+
+            .server-card.color-red    .server-card-image { background: linear-gradient(135deg,#991b1b,#0f172a); }
+            .server-card.color-blue   .server-card-image { background: linear-gradient(135deg,#1d4ed8,#0f172a); }
+            .server-card.color-yellow .server-card-image { background: linear-gradient(135deg,#a16207,#0f172a); }
+            .server-card.color-green  .server-card-image { background: linear-gradient(135deg,#15803d,#0f172a); }
 
             /* ===== SETTINGS TAB ===== */
             .rb-settings-page { display: grid; gap: 16px; }
@@ -1047,6 +1136,11 @@
                 animation: ldr-float 3s ease-in-out infinite;
             }
 
+            @keyframes ann-pop {
+                from { transform: scale(0.85); opacity: 0; }
+                to   { transform: scale(1);    opacity: 1; }
+            }
+
             @keyframes ldr-float {
                 0%, 100% { transform: translateY(0); }
                 50%       { transform: translateY(-8px); }
@@ -1238,7 +1332,7 @@
                     <!-- Register only: username -->
                     <div class="auth-field-reg field">
                         <label for="auth_reg_username">Username</label>
-                        <input type="text" id="auth_reg_username" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Choose a username">
+                        <input type="text" id="auth_reg_username" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="Choose a username" maxlength="20" pattern="[A-Za-z0-9_\-]{1,20}">
                     </div>
                     <!-- Sign-in only: username or email -->
                     <div class="auth-field-signin field">
@@ -1922,7 +2016,15 @@
                   const imgEl = document.createElement('div');
                   imgEl.className = 'server-card-image';
                   const safeImg = resolveServerImage(server.image);
-                  if (safeImg) imgEl.style.backgroundImage = 'url("' + safeImg.replace(/"/g, '%22') + '")';
+                  if (safeImg) {
+                      imgEl.style.backgroundImage = 'url("' + safeImg.replace(/"/g, '%22') + '")';
+                  } else {
+                      const initial = document.createElement('div');
+                      initial.className = 'server-card-initial';
+                      initial.textContent = (server.name || server.id || 'S')[0].toUpperCase();
+                      imgEl.appendChild(initial);
+                  }
+
                   card.appendChild(imgEl);
 
                   const body = document.createElement('div');
@@ -2182,6 +2284,46 @@
       tcon_print("", "Arguments: " + JSON.stringify(args.toArray(), null, '    '));
       tcon_print("", "Data Packs: " + JSON.stringify(args.packs, null, '    '));
 
+      // ── Ban screen ──────────────────────────────────────────────────────────
+      function _renderBanScreen(reason) {
+          const el = document.createElement('div');
+          el.id = '_ban_screen';
+          el.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif';
+          el.innerHTML = `
+            <div style="background:#c0392b;color:#fff;border-radius:12px;padding:48px 56px;max-width:480px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.18)">
+              <div style="font-size:56px;margin-bottom:16px">🚫</div>
+              <div style="font-size:26px;font-weight:700;margin-bottom:12px">You have been banned</div>
+              <div style="font-size:15px;opacity:0.9;line-height:1.6">${(reason||'You have been banned.').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+            </div>`;
+          document.body.appendChild(el);
+      }
+
+      // On page load: if a ban was triggered mid-game, show it immediately
+      (function() {
+          const pendingBan = sessionStorage.getItem('_ban_reason');
+          if (pendingBan) {
+              sessionStorage.removeItem('_ban_reason');
+              document.addEventListener('DOMContentLoaded', () => _renderBanScreen(pendingBan));
+          }
+      })();
+
+      function showBanScreen(reason) {
+          if (typeof stopFriendsPoll === 'function') stopFriendsPoll();
+          localStorage.removeItem('etherdeck_session');
+          // If the game is running, store the reason and reload so the ban screen
+          // appears on a clean page above the canvas.
+          const gameRunning = !!document.getElementById('canvas_container');
+          if (gameRunning) {
+              sessionStorage.setItem('_ban_reason', reason || 'You have been banned.');
+              window.location.reload();
+              return;
+          }
+          // Not in-game — just show inline
+          const existing = document.getElementById('_ban_screen');
+          if (existing) existing.remove();
+          _renderBanScreen(reason);
+      }
+
       // ===== EtherDeck Auth =====
       class EtherDeckAuth {
           constructor() {
@@ -2251,20 +2393,21 @@
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ token: this.currentUser.token })
                   });
+                  if (resp.status === 403) {
+                      const body = await resp.json().catch(() => ({}));
+                      if (body.banned) { showBanScreen(body.ban_reason); return; }
+                  }
                   if (resp.status === 401) {
-                      // Token definitively rejected by server — clear stale session
                       this.logout();
                       return;
                   }
-                  if (!resp.ok) return; // Server/network error — keep session, try again next reload
+                  if (!resp.ok) return;
                   const result = await resp.json();
                   if (result.success) {
                       Object.assign(this.currentUser, result.data);
                       this.saveSession();
                   }
-              } catch (_) {
-                  // Network error — keep session
-              }
+              } catch (_) {}
           }
 
           isLoggedIn()  { return this.currentUser !== null; }
@@ -2411,6 +2554,8 @@
                       const u = regUserInp  ? regUserInp.value.trim()  : '';
                       const e = regEmailInp ? regEmailInp.value.trim() : '';
                       if (!u || !e || !pass) { showAuthMsg('Please fill in all fields.', true); return; }
+                      if (!/^[A-Za-z0-9_-]{1,20}$/.test(u)) { showAuthMsg('Username must be 1–20 characters: letters, numbers, hyphens, underscores only.', true); return; }
+                      if (u.toLowerCase() === 'singleplayer') { showAuthMsg('The username "singleplayer" is reserved.', true); return; }
                       submitBtn.disabled = true; submitBtn.textContent = 'Creating account\u2026';
                       const result = await etherdeckAuth.register(u, e, pass);
                       if (result.success) {
@@ -2426,6 +2571,8 @@
                       const result = await etherdeckAuth.login(id, pass);
                       if (result.success) {
                           showAuthMsg('Signed in!', false);
+                      } else if (result.banned) {
+                          showBanScreen(result.ban_reason);
                       } else {
                           showAuthMsg(result.error || result.message || 'Login failed.', true);
                       }
@@ -2522,7 +2669,10 @@
           const u = etherdeckAuth.getUsername();
           if (!u) return;
           const r = await friendsRequest('poll', { username: u });
-          if (!r.success) return;
+          if (!r.success) {
+              if (r.banned) showBanScreen(r.ban_reason);
+              return;
+          }
           const d = r.data;
           _friendsList   = d.friends || [];
           _friendsUnread = d.unread  || {};
@@ -2587,6 +2737,48 @@
           if (_friendsChat.open && _friendsChat.username) {
               friendsChatPollMessages();
           }
+
+          // Show any pending announcements from admin
+          if (d.announcements && d.announcements.length > 0) {
+              d.announcements.forEach(a => queueAnnouncement(a.message));
+          }
+      }
+
+      let _announcementQueue = [];
+      let _announcementShowing = false;
+
+      function queueAnnouncement(message) {
+          _announcementQueue.push(message);
+          if (!_announcementShowing) showNextAnnouncement();
+      }
+
+      function showNextAnnouncement() {
+          if (_announcementQueue.length === 0) { _announcementShowing = false; return; }
+          _announcementShowing = true;
+          const message = _announcementQueue.shift();
+          const overlay = document.createElement('div');
+          overlay.id = 'announcement-overlay';
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center';
+          const box = document.createElement('div');
+          box.style.cssText = 'background:#fff;border-radius:14px;padding:40px 36px;max-width:520px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.6);animation:ann-pop .2s ease';
+          const icon = document.createElement('div');
+          icon.style.cssText = 'font-size:48px;margin-bottom:14px';
+          icon.textContent = '📢';
+          const title = document.createElement('h2');
+          title.style.cssText = 'color:#1a1a2e;margin-bottom:14px;font-size:20px;font-weight:700';
+          title.textContent = 'Announcement';
+          const msg = document.createElement('p');
+          msg.style.cssText = 'color:#333;font-size:16px;line-height:1.6;margin-bottom:28px;white-space:pre-wrap;word-break:break-word';
+          msg.textContent = message;
+          const btn = document.createElement('button');
+          btn.style.cssText = 'padding:11px 36px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer';
+          btn.textContent = 'OK';
+          btn.onclick = () => { overlay.remove(); showNextAnnouncement(); };
+          box.append(icon, title, msg, btn);
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+          // Close on backdrop click
+          overlay.addEventListener('click', e => { if (e.target === overlay) btn.onclick(); });
       }
 
       function escHtml(s) {

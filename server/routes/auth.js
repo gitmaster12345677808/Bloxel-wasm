@@ -32,7 +32,8 @@ router.post('/', async (req, res) => {
   if (action === 'register') {
     const { username, email, password } = req.body;
     if (!username || !password) return fail(res, 'Username and password are required');
-    if (username.length < 3) return fail(res, 'Username must be at least 3 characters');
+    if (!/^[A-Za-z0-9_-]{1,20}$/.test(username)) return fail(res, 'Username must be 1–20 characters: letters, numbers, hyphens, and underscores only.');
+    if (username.toLowerCase() === 'singleplayer') return fail(res, 'The username "singleplayer" is reserved.');
     if (password.length < 6) return fail(res, 'Password must be at least 6 characters');
     const [exist] = await query('SELECT id FROM users WHERE username = ?', [username]);
     if (exist) return fail(res, 'Username already registered');
@@ -57,6 +58,7 @@ router.post('/', async (req, res) => {
       'SELECT * FROM users WHERE username = ? OR email = ?', [login_id, login_id]
     );
     if (!u) return fail(res, 'Invalid username/email or password', 401);
+    if (u.banned) return res.status(403).json({ success: false, banned: true, ban_reason: u.ban_reason || 'You have been banned.', message: u.ban_reason || 'Your account has been banned' });
     const match = await bcrypt.compare(password, u.password);
     if (!match) return fail(res, 'Invalid username/email or password', 401);
     const tok = genToken();
@@ -81,7 +83,8 @@ router.post('/', async (req, res) => {
     const tok = req.body.token || req.body.auth_token;
     const u = await requireAuth(tok);
     if (!u) return fail(res, 'Authentication required', 401);
-    return ok(res, '', { id: u.id, username: u.username, email: u.email, is_admin: !!u.is_admin });
+    if (u.banned) return res.status(403).json({ success: false, banned: true, ban_reason: u.ban_reason || 'You have been banned.' });
+    return ok(res, '', { id: u.id, username: u.username, email: u.email, is_admin: !!u.is_admin, voice_disabled: !!u.voice_disabled });
   }
 
   if (action === 'check') {

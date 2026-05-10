@@ -3,13 +3,71 @@ import { query } from '../db.js';
 
 const router = Router();
 
+// ── Online presence tracking ───────────────────────────────────────────────
+const _onlineUsers = new Set();
+
+// Rewrite the current terminal line with the live player count
+function _drawStatus() {
+  const n = _onlineUsers.size;
+  const bar = n === 0
+    ? '  Players online: 0'
+    : `  Players online: ${n}  [ ${[..._onlineUsers].join('  ·  ')} ]`;
+  process.stdout.write('\r\x1b[K\x1b[36m' + bar + '\x1b[0m');
+}
+
+// Print a scrolling event line above the status
+function _logEvent(line) {
+  process.stdout.write('\r\x1b[K' + line + '\n');
+  _drawStatus();
+}
+
+function _logOnline(username, joined) {
+  const tag  = joined ? '\x1b[32m+\x1b[0m' : '\x1b[31m-\x1b[0m';
+  const verb = joined ? 'came online' : 'went offline';
+  _logEvent(`[presence] ${tag} ${username} ${verb}`);
+}
+
+// Expose so console.log patch in index.js can redraw after other log lines
+global._drawPresenceStatus = _drawStatus;
+
+// Draw initial status line immediately
+_drawStatus();
+
+// Sweep every 25 s — evict users whose last_seen has expired (>20 s old)
+setInterval(async () => {
+  if (_onlineUsers.size === 0) return;
+  try {
+    const rows = await query(
+      `SELECT u.username FROM user_status s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.last_seen > NOW() - INTERVAL 20 SECOND`
+    );
+    const stillOnline = new Set(rows.map(r => r.username));
+    for (const u of [..._onlineUsers]) {
+      if (!stillOnline.has(u)) {
+        _onlineUsers.delete(u);
+        _logOnline(u, false);
+      }
+    }
+  } catch (_) {}
+}, 25000);
+
 function ok(res, message, data = null) { res.json({ success: true, message, data }); }
 function fail(res, msg, code = 400)   { res.status(code).json({ success: false, message: msg, data: null }); }
 
 async function requireAuth(username, token) {
   if (!username || !token) return null;
-  const [u] = await query('SELECT id, username FROM users WHERE username = ? AND auth_token = ?', [username, token]);
+  const [u] = await query(
+    'SELECT id, username, banned, ban_reason FROM users WHERE username = ? AND auth_token = ?',
+    [username, token]
+  );
   return u || null;
+}
+
+function isBanned(u, res) {
+  if (!u?.banned) return false;
+  res.status(403).json({ success: false, banned: true, ban_reason: u.ban_reason || 'You have been banned.' });
+  return true;
 }
 
 async function getUserByName(username) {
@@ -48,6 +106,10 @@ router.post('/', async (req, res) => {
          port=VALUES(port), last_seen=${lastSeenExpr}`,
       [me.id, online ? 1 : 0, server_address || null, server_port || null]
     );
+    if (!online && _onlineUsers.has(me.username)) {
+      _onlineUsers.delete(me.username);
+      _logOnline(me.username, false);
+    }
     return ok(res, 'Status updated');
   }
 
@@ -222,6 +284,7 @@ router.post('/', async (req, res) => {
   if (action === 'poll') {
     const me = await requireAuth(username, token);
     if (!me) return fail(res, 'Authentication required', 401);
+    if (isBanned(me, res)) return;
 
     // Heartbeat — keeps last_seen fresh; ON DUPLICATE preserves server_address/port
     await query(
@@ -231,7 +294,30 @@ router.post('/', async (req, res) => {
       [me.id]
     );
 
+    // Log first heartbeat from this user since server start (or since they went offline)
+    if (!_onlineUsers.has(me.username)) {
+      _onlineUsers.add(me.username);
+      _logOnline(me.username, true);
+    }
+
     await query("DELETE FROM invites WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)");
+
+    // Deliver unseen announcements then advance the pointer
+    let announcements = [];
+    try {
+      announcements = await query(
+        `SELECT id, message FROM announcements
+         WHERE id > COALESCE((SELECT last_announcement_id FROM user_status WHERE user_id = ?), 0)
+           AND (target_user_id IS NULL OR target_user_id = ?)
+         ORDER BY id ASC`,
+        [me.id, me.id]
+      );
+      if (announcements.length > 0) {
+        const maxId = announcements[announcements.length - 1].id;
+        await query('UPDATE user_status SET last_announcement_id = ? WHERE user_id = ?', [maxId, me.id]);
+      }
+      await query("DELETE FROM announcements WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+    } catch (_) {}
 
     const [friend_requests, invites, unreadRows, friendRows] = await Promise.all([
       query(`SELECT fr.id, u.username AS from_username, fr.created_at
@@ -258,7 +344,7 @@ router.post('/', async (req, res) => {
     // Convert unread to { username: count } map (matching PHP format)
     const unread = unreadRows.reduce((m, r) => { m[r.from_username] = Number(r.cnt); return m; }, {});
 
-    return ok(res, 'ok', { friend_requests, invites, unread, friends: friendRows });
+    return ok(res, 'ok', { friend_requests, invites, unread, friends: friendRows, announcements });
   }
 
   return fail(res, 'Invalid action');
